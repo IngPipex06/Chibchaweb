@@ -15,6 +15,22 @@ export class Dirección {
 		this.#departamentoOPaís = datos.departamentoOPaís ?? null;
 	}
 
+	get calle() {
+		return this.#calle;
+	}
+
+	get ciudad() {
+		return this.#ciudad;
+	}
+
+	get códigoPostal() {
+		return this.#códigoPostal;
+	}
+
+	get departamentoOPaís() {
+		return this.#departamentoOPaís;
+	}
+
 	get erroresDeFormato() {
 		return [...this.#erroresDeFormato];
 	}

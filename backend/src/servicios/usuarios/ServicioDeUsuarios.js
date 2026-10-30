@@ -8,6 +8,7 @@ import * as PermisoGateway from '../../datos/gateways/PermisoGateway.js';
 import * as RolGateway from '../../datos/gateways/RolGateway.js';
 import * as TecnicoDeSoporteGateway from '../../datos/gateways/TecnicoDeSoporteGateway.js';
 import * as UsuarioGateway from '../../datos/gateways/UsuarioGateway.js';
+import { Dirección } from '../../dominio/perfiles/Direccion.js';
 import { PaqueteDeHosting } from '../../dominio/perfiles/PaqueteDeHosting.js';
 import { PlanDePago } from '../../dominio/perfiles/PlanDePago.js';
 import { Administrador } from '../../dominio/usuarios/Administrador.js';
@@ -44,6 +45,16 @@ async function cargarRol(rolId) {
  * repartida en tablas (Class Table Inheritance): la clase sale de la tabla que
  * tenga una fila con ese id.
  */
+function cargarDirección(fila) {
+	if (!fila.direccionCalle) return null;
+	return new Dirección({
+		calle: fila.direccionCalle,
+		ciudad: fila.direccionCiudad,
+		departamentoOPaís: fila.direccionDepartamentoOPais,
+		códigoPostal: fila.direccionCodigoPostal,
+	});
+}
+
 export async function cargarUsuario(fila) {
 	const base = {
 		id: fila.id,
@@ -56,7 +67,7 @@ export async function cargarUsuario(fila) {
 	};
 
 	const cliente = await ClienteGateway.buscarPorId(fila.id);
-	if (cliente) return new Cliente({ ...cliente, ...base });
+	if (cliente) return new Cliente({ ...cliente, ...base, dirección: cargarDirección(cliente) });
 
 	const distribuidor = await DistribuidorGateway.buscarPorId(fila.id);
 	if (distribuidor) return new Distribuidor({ ...distribuidor, ...base });

@@ -24,8 +24,20 @@ export class Cliente extends Titular {
 		this.#tipoDocumento = datos.tipoDocumento ?? null;
 	}
 
+	get dirección() {
+		return this.#dirección;
+	}
+
 	get nombreCompleto() {
 		return this.#nombreCompleto;
+	}
+
+	get numeroDocumento() {
+		return this.#numeroDocumento;
+	}
+
+	get tipoDocumento() {
+		return this.#tipoDocumento;
 	}
 
 	/**

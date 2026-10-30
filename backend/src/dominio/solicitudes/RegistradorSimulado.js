@@ -9,5 +9,6 @@ export class RegistradorSimulado {
 	 * @returns {boolean}
 	 */
 	enviar(archivo) {
+		return true;
 	}
 }
