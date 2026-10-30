@@ -12,6 +12,14 @@ export class Rol {
 		this.#permisos = datos.permisos ?? [];
 	}
 
+	get nombre() {
+		return this.#nombre;
+	}
+
+	get permisos() {
+		return this.#permisos;
+	}
+
 	/**
 	 * @param {Permiso} permiso
 	 */

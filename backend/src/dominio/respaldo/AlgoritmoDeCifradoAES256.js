@@ -1,4 +1,7 @@
+import { cifrarTexto, descifrarTexto } from '../../config/cifrado.js';
 import { AlgoritmoDeCifrado } from './AlgoritmoDeCifrado.js';
+
+const ESPECIFICACION = { nombre: 'aes-256-gcm', longitudClave: 32, longitudIv: 12, autenticado: true };
 
 export class AlgoritmoDeCifradoAES256 extends AlgoritmoDeCifrado {
 	/**
@@ -6,6 +9,7 @@ export class AlgoritmoDeCifradoAES256 extends AlgoritmoDeCifrado {
 	 * @returns {string}
 	 */
 	cifrar(datos) {
+		return cifrarTexto(ESPECIFICACION, datos);
 	}
 
 	/**
@@ -13,5 +17,6 @@ export class AlgoritmoDeCifradoAES256 extends AlgoritmoDeCifrado {
 	 * @returns {string}
 	 */
 	descifrar(datos) {
+		return descifrarTexto(ESPECIFICACION, datos);
 	}
 }

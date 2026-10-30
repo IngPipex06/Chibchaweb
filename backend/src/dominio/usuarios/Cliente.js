@@ -23,4 +23,8 @@ export class Cliente extends Titular {
 		this.#teléfono = datos.teléfono ?? null;
 		this.#tipoDocumento = datos.tipoDocumento ?? null;
 	}
+
+	get nombreCompleto() {
+		return this.#nombreCompleto;
+	}
 }

@@ -7,4 +7,8 @@ export class Administrador extends Empleado {
 		super(datos);
 		this.#rol = datos.rol ?? null;
 	}
+
+	get rol() {
+		return this.#rol;
+	}
 }

@@ -11,4 +11,8 @@ export class Permiso {
 		this.#id = datos.id ?? null;
 		this.#nombre = datos.nombre ?? null;
 	}
+
+	get nombre() {
+		return this.#nombre;
+	}
 }

@@ -1,6 +1,6 @@
 # Mapa de archivos de ChibchaWeb
 
-Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí solo existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, y los de `database/`. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, los de `database/` y, en `backend/`, lo que usan UC1 a UC4 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
 
 ## Tres niveles
 
@@ -243,7 +243,16 @@ Las migraciones salen del diagrama entidad-relación. Las columnas conservan el 
 - Las clases abstractas lanzan un error si se instancian directamente.
 - Los atributos son privados (`#id`) y se reciben en el constructor con un objeto: `new Ticket({ id: 1 })`. Los métodos privados también usan `#`; los protegidos se marcan con `@protected`, porque JavaScript no los tiene.
 
+## Backend construido
+
+- API con Express 5 y PostgreSQL con `pg`. Contraseñas y respuestas de seguridad con bcrypt (costo 12, máximo 72 bytes). Sesión con JWT en la cabecera `Authorization: Bearer`.
+- Rutas en `/api/usuarios`: `POST /registro` (UC1), `POST /sesion` (UC2), `POST /recuperacion/pregunta` y `POST /recuperacion` (UC3 y UC4), `GET /perfil`.
+- Gateways: usuario, cliente, distribuidor, empleado, administrador, técnico de soporte, rol y permiso, cada uno con las consultas que ya se usan.
+- Uso: `cp backend/.env.example backend/.env`, igualar la clave de `DATABASE_URL` con la del `.env` de la raíz, y `npm install` y `npm start` dentro de `backend/`. `npm test` necesita la base levantada.
+- Primer administrador: `ADMIN_CORREO=... ADMIN_CONTRASENA=... ADMIN_NOMBRE=... ADMIN_DOCUMENTO=... ADMIN_ROL="Administrador de Personal" npm run crear-admin`. UC9 no sirve para esto porque ya exige un administrador.
+- Cifrado de respaldos con `crypto` de Node para los cuatro algoritmos, sin dependencias: `aes-256-gcm`, `chacha20-poly1305`, `bf-cbc` y `des-ede3-cbc`. Blowfish vive en el proveedor legacy de OpenSSL 3, por eso los scripts de `backend/package.json` usan `--openssl-legacy-provider`; sin esa opción el servidor no arranca. Blowfish y Triple DES no detectan alteraciones del archivo. La clave maestra es `CLAVE_RESPALDO`: si se pierde, los respaldos no se pueden descifrar.
+- `config/hash.js`, `config/cifrado.js` y `servicios/usuarios/validacion.js` son apoyo de código y no están en el modelo. En el dominio, `iniciarSesión` y `validarRespuesta` devuelven una promesa de booleano, porque bcrypt es asíncrono.
+
 ## Por definir
 
-- Framework de la API. Este mapa supone Express, que es solo una propuesta.
-- Biblioteca de cifrado, que debe cubrir AES-256, ChaCha20, Blowfish y Triple DES.
+- Contador de intentos fallidos de UC2 (E2, pasos 5.2 y 5.3): no hay atributo ni columna en el modelo, ni límite definido.

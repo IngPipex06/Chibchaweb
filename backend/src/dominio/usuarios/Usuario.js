@@ -1,3 +1,4 @@
+import { compararHash, generarHash } from '../../config/hash.js';
 import { EstadoUsuario } from './EstadoUsuario.js';
 
 export class Usuario {
@@ -19,6 +20,26 @@ export class Usuario {
 		this.#preguntaDeSeguridad = datos.preguntaDeSeguridad ?? null;
 	}
 
+	get contraseña() {
+		return this.#contraseña;
+	}
+
+	get correo() {
+		return this.#correo;
+	}
+
+	get estado() {
+		return this.#estado;
+	}
+
+	get id() {
+		return this.#id;
+	}
+
+	get preguntaDeSeguridad() {
+		return this.#preguntaDeSeguridad;
+	}
+
 	activar() {
 	}
 
@@ -27,14 +48,16 @@ export class Usuario {
 
 	/**
 	 * @param {string} contraseña
-	 * @returns {boolean}
+	 * @returns {Promise<boolean>}
 	 */
 	iniciarSesión(contraseña) {
+		return compararHash(contraseña, this.#contraseña);
 	}
 
 	/**
 	 * @param {string} nueva
 	 */
-	restablecerContraseña(nueva) {
+	async restablecerContraseña(nueva) {
+		this.#contraseña = await generarHash(nueva);
 	}
 }

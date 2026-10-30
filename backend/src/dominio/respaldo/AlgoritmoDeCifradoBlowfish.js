@@ -1,4 +1,7 @@
+import { cifrarTexto, descifrarTexto } from '../../config/cifrado.js';
 import { AlgoritmoDeCifrado } from './AlgoritmoDeCifrado.js';
+
+const ESPECIFICACION = { nombre: 'bf-cbc', longitudClave: 32, longitudIv: 8, autenticado: false };
 
 export class AlgoritmoDeCifradoBlowfish extends AlgoritmoDeCifrado {
 	/**
@@ -6,6 +9,7 @@ export class AlgoritmoDeCifradoBlowfish extends AlgoritmoDeCifrado {
 	 * @returns {string}
 	 */
 	cifrar(datos) {
+		return cifrarTexto(ESPECIFICACION, datos);
 	}
 
 	/**
@@ -13,5 +17,6 @@ export class AlgoritmoDeCifradoBlowfish extends AlgoritmoDeCifrado {
 	 * @returns {string}
 	 */
 	descifrar(datos) {
+		return descifrarTexto(ESPECIFICACION, datos);
 	}
 }

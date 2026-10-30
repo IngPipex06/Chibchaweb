@@ -14,4 +14,8 @@ export class Empleado extends Usuario {
 		this.#nombreCompleto = datos.nombreCompleto ?? null;
 		this.#teléfono = datos.teléfono ?? null;
 	}
+
+	get nombreCompleto() {
+		return this.#nombreCompleto;
+	}
 }

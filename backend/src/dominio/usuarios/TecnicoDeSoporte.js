@@ -8,6 +8,10 @@ export class TécnicoDeSoporte extends Empleado {
 		this.#nivelDeServicio = datos.nivelDeServicio ?? null;
 	}
 
+	get nivelDeServicio() {
+		return this.#nivelDeServicio;
+	}
+
 	/**
 	 * @returns {Ticket[]}
 	 */

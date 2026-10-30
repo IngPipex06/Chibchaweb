@@ -20,6 +20,10 @@ export class Distribuidor extends Titular {
 		this.#razónSocial = datos.razónSocial ?? null;
 	}
 
+	get razónSocial() {
+		return this.#razónSocial;
+	}
+
 	notificarCambioDeCategoría() {
 	}
 

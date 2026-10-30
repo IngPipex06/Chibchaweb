@@ -1,3 +1,5 @@
+import { compararHash } from '../../config/hash.js';
+
 export class PreguntaDeSeguridad {
 	#pregunta;
 	#respuesta;
@@ -7,10 +9,15 @@ export class PreguntaDeSeguridad {
 		this.#respuesta = datos.respuesta ?? null;
 	}
 
+	get pregunta() {
+		return this.#pregunta;
+	}
+
 	/**
 	 * @param {string} intento
-	 * @returns {boolean}
+	 * @returns {Promise<boolean>}
 	 */
 	validarRespuesta(intento) {
+		return compararHash(intento, this.#respuesta);
 	}
 }
