@@ -1,0 +1,13 @@
+CREATE TYPE estado_usuario AS ENUM ('Activo', 'Inhabilitado');
+CREATE TYPE paquete_de_hosting AS ENUM ('Chibcha-Platino', 'Chibcha-Plata', 'Chibcha-Oro');
+CREATE TYPE plan_de_pago AS ENUM ('Mensual', 'Trimestral', 'Semestral', 'Anual');
+CREATE TYPE categoria_distribuidor AS ENUM ('Básico', 'Premium');
+CREATE TYPE nivel_de_servicio AS ENUM ('Nivel1', 'Nivel2', 'Nivel3');
+CREATE TYPE tipo_tarjeta AS ENUM ('Visa', 'Mastercard', 'Diners');
+CREATE TYPE estado_factura AS ENUM ('Pendiente', 'Pagada', 'Vencida');
+CREATE TYPE estado_comprobante AS ENUM ('Exitoso', 'Fallido');
+CREATE TYPE estado_solicitud_dominio AS ENUM ('Generada', 'Enviada');
+CREATE TYPE prioridad AS ENUM ('Alta', 'Media', 'Baja');
+CREATE TYPE estado_ticket AS ENUM ('Abierto', 'EnProgreso', 'Rezagado-SLAVencido', 'Resuelto');
+CREATE TYPE estado_migracion AS ENUM ('EnProgreso', 'Pausado', 'Completado', 'RevertidoPorErrorEstructural');
+CREATE TYPE algoritmo_de_cifrado AS ENUM ('AES256', 'ChaCha20', 'Blowfish', 'TripleDES');

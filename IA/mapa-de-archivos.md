@@ -1,6 +1,6 @@
 # Mapa de archivos de ChibchaWeb
 
-Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí solo existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí solo existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, y los de `database/`. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
 
 ## Tres niveles
 
@@ -217,6 +217,8 @@ database/
 └── semillas/
     └── 001_datos_iniciales.sql  roles, permisos y la fila de configuracion_cifrado
 ```
+
+Las migraciones salen del diagrama entidad-relación y se aplican en orden numérico, seguidas de las semillas. Las columnas conservan el nombre exacto del modelo, así que en SQL se escriben entre comillas (`"fechaCreación"`). Cada `ENUM` del modelo es un `CREATE TYPE` con nombre propio.
 
 ## Reglas de dependencia
 
