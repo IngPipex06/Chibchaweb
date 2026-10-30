@@ -7,12 +7,11 @@ import { after, before, mock, test } from 'node:test';
 
 const carpeta = await mkdtemp(join(tmpdir(), 'chibchaweb-'));
 process.env.RUTA_RESPALDO = join(carpeta, 'contingencia.jsonl');
-process.env.ALGORITMO_RESPALDO = 'ChaCha20';
 
 const { app } = await import('../../src/app.js');
 const { enTransaccion, esCaidaDeBase, pool } = await import('../../src/config/baseDeDatos.js');
 const { aplicadoresDeRespaldo } = await import('../../src/servicios/perfiles/ServicioDePerfiles.js');
-const { reconciliar } = await import('../../src/servicios/respaldo/ServicioDeContingencia.js');
+const { cargarAlgoritmoVigente, reconciliar } = await import('../../src/servicios/respaldo/ServicioDeContingencia.js');
 const { crearAdministrador } = await import('../../src/servicios/usuarios/ServicioDeUsuarios.js');
 
 const CLAVE = 'clave-segura';
@@ -84,9 +83,12 @@ before(async () => {
 		sesiones[clave] = respuesta.cuerpo.token;
 	}
 	token = sesiones.clientes;
+	await pool.query(`UPDATE configuracion_cifrado SET "algoritmoActivo" = 'ChaCha20'`);
+	await cargarAlgoritmoVigente();
 });
 
 after(async () => {
+	await pool.query(`UPDATE configuracion_cifrado SET "algoritmoActivo" = 'AES256'`);
 	const { rows } = await pool.query('SELECT "id" FROM usuario WHERE "correo" = ANY($1)', [correos]);
 	const ids = rows.map((fila) => fila.id);
 	for (const tabla of ['cliente', 'distribuidor', 'administrador', 'tecnico_de_soporte', 'empleado', 'usuario']) {
@@ -184,6 +186,20 @@ test('un respaldo que no se puede aplicar queda en el archivo', async () => {
 
 	assert.deepEqual(await reconciliar(aplicadoresDeRespaldo), { aplicados: 0, pendientes: 1 });
 	assert.equal((await readFile(process.env.RUTA_RESPALDO, 'utf8')).trim().split('\n').length, 1);
+});
+
+test('sin base al arrancar se conserva el algoritmo cargado', async () => {
+	const caida = mock.method(pool, 'query', () =>
+		Promise.reject(Object.assign(new Error('caída simulada'), { code: 'ECONNREFUSED' })),
+	);
+	await cargarAlgoritmoVigente();
+	caida.mock.restore();
+
+	const datos = nuevoCliente();
+	await conCaida('POST', '/perfiles/clientes', datos);
+	const [linea] = (await readFile(process.env.RUTA_RESPALDO, 'utf8')).trim().split('\n').slice(-1);
+	assert.equal(JSON.parse(linea).algoritmo, 'ChaCha20');
+	await reconciliar(aplicadoresDeRespaldo);
 });
 
 test('un error de datos no activa la contingencia', async () => {

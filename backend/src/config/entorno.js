@@ -11,5 +11,4 @@ export const entorno = Object.freeze({
 	claveRespaldo: requerida('CLAVE_RESPALDO'),
 	expiracionJwt: process.env.JWT_EXPIRACION ?? '8h',
 	rutaRespaldo: process.env.RUTA_RESPALDO ?? 'respaldos/contingencia.jsonl',
-	algoritmoRespaldo: process.env.ALGORITMO_RESPALDO ?? 'AES256',
 });

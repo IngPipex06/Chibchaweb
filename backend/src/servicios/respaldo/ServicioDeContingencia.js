@@ -2,6 +2,7 @@ import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises
 import { dirname } from 'node:path';
 import { esCaidaDeBase } from '../../config/baseDeDatos.js';
 import { entorno } from '../../config/entorno.js';
+import * as ConfiguracionCifradoGateway from '../../datos/gateways/ConfiguracionCifradoGateway.js';
 import { AlgoritmoDeCifradoAES256 } from '../../dominio/respaldo/AlgoritmoDeCifradoAES256.js';
 import { AlgoritmoDeCifradoBlowfish } from '../../dominio/respaldo/AlgoritmoDeCifradoBlowfish.js';
 import { AlgoritmoDeCifradoChaCha20 } from '../../dominio/respaldo/AlgoritmoDeCifradoChaCha20.js';
@@ -15,20 +16,27 @@ const ALGORITMOS = Object.freeze({
 	TripleDES: AlgoritmoDeCifradoTripleDES,
 });
 
-// Se comprueba al arrancar: fallar durante una caída perdería el respaldo.
-if (!Object.hasOwn(ALGORITMOS, entorno.algoritmoRespaldo)) {
-	throw new Error(`ALGORITMO_RESPALDO no es válido: ${entorno.algoritmoRespaldo}`);
+// El respaldo actúa con la base caída, cuando la tabla ya no se puede leer: se conserva en memoria.
+let algoritmoVigente = 'AES256';
+
+/** Se llama al arrancar. Si la base no responde, sigue el valor por defecto del dominio. */
+export async function cargarAlgoritmoVigente() {
+	try {
+		algoritmoVigente = (await ConfiguracionCifradoGateway.obtenerAlgoritmoActivo()) ?? algoritmoVigente;
+	} catch (error) {
+		if (!esCaidaDeBase(error)) throw error;
+		console.error(`Base no disponible: el respaldo usará ${algoritmoVigente}`);
+	}
 }
 
 /** RT4: una línea por respaldo. Lo pendiente es lo que siga en el archivo, no un estado. */
 export async function respaldarEnArchivo(datos, origen) {
-	const nombre = entorno.algoritmoRespaldo;
-	const gestor = new GestorDeRespaldoCifrado({ algoritmoActivo: new ALGORITMOS[nombre]() });
+	const gestor = new GestorDeRespaldoCifrado({ algoritmoActivo: new ALGORITMOS[algoritmoVigente]() });
 	const archivo = gestor.respaldar(JSON.stringify(datos), origen);
 	const linea = JSON.stringify({
 		fecha: archivo.fecha,
 		origen: archivo.origen,
-		algoritmo: nombre,
+		algoritmo: algoritmoVigente,
 		contenido: archivo.contenidoCifrado,
 	});
 	await mkdir(dirname(entorno.rutaRespaldo), { recursive: true });
