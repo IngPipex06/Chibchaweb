@@ -13,4 +13,18 @@ export class Titular extends Usuario {
 		if (new.target === Titular) throw new Error('Titular es abstracta');
 		this.#mediosDePago = datos.mediosDePago ?? [];
 	}
+
+	/**
+	 * @param {MedioDePago} medioDePago
+	 */
+	agregarMedioDePago(medioDePago) {
+		this.#mediosDePago.push(medioDePago);
+	}
+
+	/**
+	 * @param {MedioDePago} medioDePago
+	 */
+	quitarMedioDePago(medioDePago) {
+		this.#mediosDePago = this.#mediosDePago.filter((elemento) => elemento !== medioDePago);
+	}
 }

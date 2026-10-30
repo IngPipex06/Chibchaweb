@@ -40,4 +40,18 @@ export class ProcesoDeMigración {
 
 	revertir() {
 	}
+
+	/**
+	 * @param {EntradaDeInconsistencia} entrada
+	 */
+	agregarEntradaDeInconsistencia(entrada) {
+		this.#entradasDeInconsistencia.push(entrada);
+	}
+
+	/**
+	 * @param {EntradaDeInconsistencia} entrada
+	 */
+	quitarEntradaDeInconsistencia(entrada) {
+		this.#entradasDeInconsistencia = this.#entradasDeInconsistencia.filter((elemento) => elemento !== entrada);
+	}
 }

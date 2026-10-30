@@ -34,4 +34,18 @@ export class GestorDeRespaldoCifrado {
 		this.#algoritmoActivo ??= new AlgoritmoDeCifradoAES256();
 		return this.#algoritmoActivo;
 	}
+
+	/**
+	 * @param {ArchivoDeRespaldoCifrado} archivo
+	 */
+	agregarArchivoDeRespaldo(archivo) {
+		this.#archivosDeRespaldo.push(archivo);
+	}
+
+	/**
+	 * @param {ArchivoDeRespaldoCifrado} archivo
+	 */
+	quitarArchivoDeRespaldo(archivo) {
+		this.#archivosDeRespaldo = this.#archivosDeRespaldo.filter((elemento) => elemento !== archivo);
+	}
 }

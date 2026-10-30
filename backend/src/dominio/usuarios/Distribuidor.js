@@ -29,4 +29,18 @@ export class Distribuidor extends Titular {
 
 	recalcularCategoría() {
 	}
+
+	/**
+	 * @param {Dominio} dominio
+	 */
+	agregarDominioGestionado(dominio) {
+		this.#dominiosGestionados.push(dominio);
+	}
+
+	/**
+	 * @param {Dominio} dominio
+	 */
+	quitarDominioGestionado(dominio) {
+		this.#dominiosGestionados = this.#dominiosGestionados.filter((elemento) => elemento !== dominio);
+	}
 }

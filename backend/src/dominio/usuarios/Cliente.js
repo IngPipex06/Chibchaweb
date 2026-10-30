@@ -27,4 +27,18 @@ export class Cliente extends Titular {
 	get nombreCompleto() {
 		return this.#nombreCompleto;
 	}
+
+	/**
+	 * @param {Dominio} dominio
+	 */
+	agregarDominio(dominio) {
+		this.#dominios.push(dominio);
+	}
+
+	/**
+	 * @param {Dominio} dominio
+	 */
+	quitarDominio(dominio) {
+		this.#dominios = this.#dominios.filter((elemento) => elemento !== dominio);
+	}
 }

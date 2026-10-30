@@ -24,12 +24,14 @@ export class Rol {
 	 * @param {Permiso} permiso
 	 */
 	agregarPermiso(permiso) {
+		this.#permisos.push(permiso);
 	}
 
 	/**
 	 * @param {Permiso} permiso
 	 */
 	quitarPermiso(permiso) {
+		this.#permisos = this.#permisos.filter((elemento) => elemento !== permiso);
 	}
 
 	/**

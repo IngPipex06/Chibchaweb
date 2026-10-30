@@ -16,4 +16,18 @@ export class CierreMensual {
 
 	ejecutar() {
 	}
+
+	/**
+	 * @param {Comisión} comisión
+	 */
+	agregarComisión(comisión) {
+		this.#comisiones.push(comisión);
+	}
+
+	/**
+	 * @param {Comisión} comisión
+	 */
+	quitarComisión(comisión) {
+		this.#comisiones = this.#comisiones.filter((elemento) => elemento !== comisión);
+	}
 }
