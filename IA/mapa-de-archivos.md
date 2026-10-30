@@ -16,6 +16,8 @@ Estructura del repositorio. Las carpetas ya están creadas. De los archivos que 
 code/
 ├── README.md
 ├── package.json                 scripts de todo el repositorio (workspaces)
+├── docker-compose.yml           PostgreSQL en contenedor
+├── .env.example                 credenciales y puerto de la base de datos
 ├── .gitignore
 ├── IA/                          contexto y este mapa
 ├── frontend/                    nivel de presentación
@@ -203,6 +205,7 @@ gateways/
 
 ```text
 database/
+├── iniciar.sh                   aplica migraciones y semillas al crear el volumen
 ├── migraciones/                 en orden, por las claves foráneas
 │   ├── 001_tipos_enum.sql
 │   ├── 002_usuarios.sql         usuario, cliente, distribuidor, empleado, rol, permiso,
@@ -218,7 +221,9 @@ database/
     └── 001_datos_iniciales.sql  roles, permisos y la fila de configuracion_cifrado
 ```
 
-Las migraciones salen del diagrama entidad-relación y se aplican en orden numérico, seguidas de las semillas. Las columnas conservan el nombre exacto del modelo, así que en SQL se escriben entre comillas (`"fechaCreación"`). Cada `ENUM` del modelo es un `CREATE TYPE` con nombre propio.
+La base corre en Docker, sin instalar PostgreSQL: `cp .env.example .env` y `docker compose up -d`. La primera vez, `iniciar.sh` aplica las migraciones en orden numérico y luego las semillas. Esos scripts solo corren con el volumen vacío, así que un cambio en ellos se aplica con `docker compose down -v`, que borra los datos, seguido de `docker compose up -d`.
+
+Las migraciones salen del diagrama entidad-relación. Las columnas conservan el nombre exacto del modelo, así que en SQL se escriben entre comillas (`"fechaCreación"`). Cada `ENUM` del modelo es un `CREATE TYPE` con nombre propio.
 
 ## Reglas de dependencia
 
