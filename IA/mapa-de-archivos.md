@@ -1,0 +1,242 @@
+# Mapa de archivos de ChibchaWeb
+
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí solo existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+
+## Tres niveles
+
+| Nivel | Carpeta | Tecnología | Contiene |
+|---|---|---|---|
+| Presentación | `frontend/` | React con Vite | Pantallas por rol; solo habla con la API |
+| Lógica | `backend/` | Node.js (JavaScript) | API, capa de servicios, dominio y *gateways* |
+| Datos | `database/` | PostgreSQL | Esquema, tipos `ENUM` y datos iniciales |
+
+## Árbol general
+
+```text
+code/
+├── README.md
+├── package.json                 scripts de todo el repositorio (workspaces)
+├── .gitignore
+├── IA/                          contexto y este mapa
+├── frontend/                    nivel de presentación
+├── backend/                     nivel de lógica
+└── database/                    nivel de datos
+```
+
+## frontend/
+
+La plantilla actual se mueve aquí y se pasa de TypeScript a JavaScript. El detalle de las pantallas se define con el trabajo de UX/UI.
+
+```text
+frontend/
+├── package.json, package-lock.json
+├── index.html
+├── vite.config.js
+├── eslint.config.js
+├── public/                      logos e íconos actuales
+└── src/
+    ├── main.jsx
+    ├── App.jsx
+    ├── index.css
+    ├── assets/
+    ├── rutas/                   rutas y protección por rol
+    ├── api/                     llamadas HTTP al backend
+    ├── componentes/             piezas reutilizables
+    └── paginas/
+        ├── publico/             portal, inicio de sesión, registro
+        ├── cliente/
+        ├── distribuidor/
+        ├── administrador/
+        └── tecnico/
+```
+
+## backend/
+
+```text
+backend/
+├── package.json
+├── .env.example                 conexión a la base de datos y puerto
+├── respaldos/                   archivos cifrados de contingencia (no se versiona)
+├── test/                        misma organización que src/
+└── src/
+    ├── servidor.js              arranque
+    ├── app.js                   configuración de la API
+    ├── config/
+    │   ├── entorno.js
+    │   └── baseDeDatos.js       conexión a PostgreSQL
+    ├── api/                     entrada HTTP
+    │   ├── middleware/
+    │   │   ├── autenticacion.js
+    │   │   ├── autorizacion.js  permisos por rol
+    │   │   └── errores.js
+    │   └── rutas/
+    │       ├── usuarios.rutas.js
+    │       ├── perfiles.rutas.js
+    │       ├── facturacion.rutas.js
+    │       ├── pagos.rutas.js
+    │       ├── solicitudes.rutas.js
+    │       ├── soporte.rutas.js
+    │       └── migracion.rutas.js
+    ├── servicios/               capa de servicios (ver "Por definir")
+    ├── dominio/                 54 archivos, uno por clase del modelo
+    └── datos/
+        └── gateways/            20 archivos, uno por tabla
+```
+
+### backend/src/servicios/
+
+La capa de servicios no está modelada. Estos nombres son una propuesta, uno o dos por región.
+
+```text
+servicios/
+├── usuarios/       ServicioDeAutenticacion.js, ServicioDeUsuarios.js, ServicioDeRoles.js
+├── perfiles/       ServicioDePerfiles.js, ServicioDeMediosDePago.js
+├── facturacion/    ServicioDeFacturacion.js, ServicioDeCierreMensual.js
+├── pagos/          ServicioDePagos.js
+├── solicitudes/    ServicioDeSolicitudes.js
+├── soporte/        ServicioDeTickets.js, FabricaDeEstadoTicket.js
+├── migracion/      ServicioDeMigracion.js
+└── respaldo/       ServicioDeRespaldo.js, FabricaDeAlgoritmoDeCifrado.js
+```
+
+Las dos fábricas son las fábricas simples que describe la Sección 5 del documento: traducen `ticket.estado` y `configuracion_cifrado.algoritmoActivo` a sus objetos.
+
+### backend/src/dominio/
+
+Las carpetas son las 8 regiones del diagrama 60, con las mismas clases. El esqueleto salió de la exportación de Enterprise Architect y se convirtió a clases ES con los datos del modelo (herencia, realizaciones, visibilidad y tipos). No se debe volver a exportar sobre estos archivos: un cambio en el modelo se pasa al código a mano.
+
+```text
+dominio/
+├── usuarios/
+│   ├── Usuario.js                 abstracta
+│   ├── Titular.js                 abstracta
+│   ├── Cliente.js
+│   ├── Distribuidor.js
+│   ├── Empleado.js                abstracta
+│   ├── Administrador.js
+│   ├── TecnicoDeSoporte.js
+│   ├── Rol.js
+│   ├── Permiso.js
+│   ├── PreguntaDeSeguridad.js
+│   ├── EstadoUsuario.js           enumeración
+│   └── CategoriaDistribuidor.js   enumeración
+├── perfiles/
+│   ├── Direccion.js
+│   ├── MedioDePago.js             abstracta, Template Method
+│   ├── TarjetaVisa.js
+│   ├── TarjetaMastercard.js
+│   ├── TarjetaDiners.js
+│   ├── PaqueteDeHosting.js        enumeración
+│   └── PlanDePago.js              enumeración
+├── facturacion/
+│   ├── Factura.js
+│   ├── CierreMensual.js
+│   ├── Comision.js
+│   ├── Cheque.js
+│   ├── BancoSimulado.js
+│   └── EstadoFactura.js           enumeración
+├── pagos/
+│   ├── ComprobanteDePago.js
+│   ├── PasarelaDePagoSimulada.js
+│   └── EstadoComprobante.js       enumeración
+├── solicitudes/
+│   ├── SolicitudDeDominio.js
+│   ├── Dominio.js
+│   ├── ArchivoXML.js
+│   ├── RegistradorSimulado.js
+│   └── EstadoSolicitudDominio.js  enumeración
+├── soporte/
+│   ├── Ticket.js                  contexto de State
+│   ├── EstadoTicket.js            interfaz
+│   ├── TicketAbierto.js
+│   ├── TicketEnProgreso.js
+│   ├── TicketRezagado.js
+│   ├── TicketResuelto.js
+│   ├── NivelDeServicio.js         enumeración
+│   └── Prioridad.js               enumeración
+├── migracion/
+│   ├── ProcesoDeMigracion.js      originador de Memento
+│   ├── RegistroLegado.js
+│   ├── EntradaDeInconsistencia.js
+│   ├── PuntoDeControlMigracion.js Memento
+│   └── EstadoMigracion.js         enumeración
+└── respaldo/
+    ├── GestorDeRespaldoCifrado.js contexto de Strategy
+    ├── ArchivoDeRespaldoCifrado.js
+    ├── AlgoritmoDeCifrado.js      interfaz
+    ├── AlgoritmoDeCifradoAES256.js
+    ├── AlgoritmoDeCifradoChaCha20.js
+    ├── AlgoritmoDeCifradoBlowfish.js
+    ├── AlgoritmoDeCifradoTripleDES.js
+    └── OrigenRespaldo.js          enumeración
+```
+
+### backend/src/datos/gateways/
+
+Un *Table Data Gateway* por tabla, como decide la Sección 5.1 del documento.
+
+```text
+gateways/
+├── UsuarioGateway.js
+├── ClienteGateway.js
+├── DistribuidorGateway.js
+├── EmpleadoGateway.js
+├── AdministradorGateway.js
+├── TecnicoDeSoporteGateway.js
+├── RolGateway.js
+├── PermisoGateway.js
+├── MedioDePagoGateway.js
+├── FacturaGateway.js
+├── CierreMensualGateway.js
+├── ComisionGateway.js
+├── ChequeGateway.js
+├── ComprobanteDePagoGateway.js
+├── SolicitudDeDominioGateway.js
+├── DominioGateway.js
+├── TicketGateway.js
+├── ProcesoDeMigracionGateway.js
+├── EntradaDeInconsistenciaGateway.js
+└── ConfiguracionCifradoGateway.js
+```
+
+## database/
+
+```text
+database/
+├── migraciones/                 en orden, por las claves foráneas
+│   ├── 001_tipos_enum.sql
+│   ├── 002_usuarios.sql         usuario, cliente, distribuidor, empleado, rol, permiso,
+│   │                            administrador, tecnico_de_soporte
+│   ├── 003_perfiles.sql         medio_de_pago
+│   ├── 004_facturacion.sql      factura, cierre_mensual, comision, cheque
+│   ├── 005_pagos.sql            comprobante_de_pago
+│   ├── 006_solicitudes.sql      dominio, solicitud_de_dominio
+│   ├── 007_soporte.sql          ticket
+│   ├── 008_migracion.sql        proceso_de_migracion, entrada_de_inconsistencia
+│   └── 009_respaldo.sql         configuracion_cifrado
+└── semillas/
+    └── 001_datos_iniciales.sql  roles, permisos y la fila de configuracion_cifrado
+```
+
+## Reglas de dependencia
+
+1. `frontend/` solo conoce la API; nunca el dominio ni la base de datos.
+2. `api/` llama a `servicios/`; no contiene reglas de negocio.
+3. `servicios/` coordina: pide filas a `datos/`, arma los objetos de `dominio/` y guarda el resultado.
+4. `dominio/` no importa nada de `api/`, `servicios/` ni `datos/`, y no contiene SQL.
+5. `datos/gateways/` solo mueve filas; no conoce las clases de dominio.
+
+## Convenciones
+
+- Carpetas y archivos sin tildes, para evitar problemas entre sistemas operativos y en Git. Si la exportación de EA genera `Dirección.js`, se renombra a `Direccion.js`.
+- Dentro del código, las clases y los atributos conservan el nombre exacto del modelo, con tildes (`class Dirección`). Node lo admite; se comprobó con clases, campos privados e imports.
+- Las enumeraciones son objetos congelados con `Object.freeze`, porque JavaScript no tiene `enum`. Excepción: `NivelDeServicio` tiene el método `siguiente()`, así que es una clase con instancias estáticas congeladas y su texto está en `.valor`.
+- Las claves de `PaqueteDeHosting` no llevan guion (`ChibchaPlatino`), pero sus valores conservan el nombre del modelo (`'Chibcha-Platino'`).
+- Las interfaces `EstadoTicket` y `AlgoritmoDeCifrado` son clases base cuyos métodos lanzan un error si no se implementan. Los métodos abstractos hacen lo mismo.
+- Las clases abstractas lanzan un error si se instancian directamente.
+- Los atributos son privados (`#id`) y se reciben en el constructor con un objeto: `new Ticket({ id: 1 })`. Los métodos privados también usan `#`; los protegidos se marcan con `@protected`, porque JavaScript no los tiene.
+
+## Por definir
+
+- Framework de la API. Este mapa supone Express, que es solo una propuesta.
+- Biblioteca de cifrado, que debe cubrir AES-256, ChaCha20, Blowfish y Triple DES.

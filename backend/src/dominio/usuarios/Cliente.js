@@ -1,0 +1,28 @@
+import { Titular } from './Titular.js';
+
+export class Cliente extends Titular {
+	#dirección;
+	#dominios;
+	#fechaNacimiento;
+	#nombreCompleto;
+	#numeroDocumento;
+	#paqueteHosting;
+	#planDePago;
+	#teléfono;
+	#tipoDocumento;
+	#solicitudes;
+
+	constructor(datos = {}) {
+		super(datos);
+		this.#dirección = datos.dirección ?? null;
+		this.#dominios = datos.dominios ?? [];
+		this.#fechaNacimiento = datos.fechaNacimiento ?? null;
+		this.#nombreCompleto = datos.nombreCompleto ?? null;
+		this.#numeroDocumento = datos.numeroDocumento ?? null;
+		this.#paqueteHosting = datos.paqueteHosting ?? null;
+		this.#planDePago = datos.planDePago ?? null;
+		this.#teléfono = datos.teléfono ?? null;
+		this.#tipoDocumento = datos.tipoDocumento ?? null;
+		this.#solicitudes = datos.solicitudes ?? null;
+	}
+}
