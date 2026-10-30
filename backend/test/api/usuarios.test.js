@@ -152,7 +152,11 @@ test('UC2: carga el rol y los permisos del administrador', async () => {
 	assert.equal(estado, 200);
 	assert.equal(cuerpo.perfil.tipo, 'Administrador');
 	assert.equal(cuerpo.perfil.rol, 'Administrador de Personal');
-	assert.deepEqual(cuerpo.perfil.permisos, ['GestionarPerfilDePersonalInterno']);
+	assert.deepEqual(cuerpo.perfil.permisos, [
+		'EjecutarCierreMensual',
+		'GenerarFactura',
+		'GestionarPerfilDePersonalInterno',
+	]);
 });
 
 test('UC3 y UC4: recupera la contraseña solo con la respuesta correcta', async () => {

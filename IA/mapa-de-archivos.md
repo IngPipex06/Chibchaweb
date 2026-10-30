@@ -1,6 +1,6 @@
 # Mapa de archivos de ChibchaWeb
 
-Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, los de `database/` y, en `backend/`, lo que usan UC1 a UC10 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, los de `database/` y, en `backend/`, lo que usan UC1 a UC15 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
 
 ## Tres niveles
 
@@ -261,3 +261,15 @@ Las migraciones salen del diagrama entidad-relación. Las columnas conservan el 
 - Tarjetas: la vigencia solo se valida al ingresarlas, y no hay estados de tarjeta. El front muestra `Inhabilitado` como "Inactivo".
 - `MedioDePago` recibe el número completo en el constructor, lo guarda solo en memoria y deriva `numeroEnmascarado`, porque `validar()` no tiene parámetros y Luhn, longitud y prefijo necesitan el número. También expone `motivosDeRechazo` para la lista de errores de UC8; `Dirección` expone `erroresDeFormato` para UC7. A la base solo llega el número enmascarado, por eso editar un cliente exige reingresar la tarjeta (UC6 paso 8); si es la misma, no se duplica la fila.
 - `PasarelaDePagoSimulada.autorizar` siempre aprueba. Las altas por administrador de UC6 y UC10 piden `correo` y `contraseña`, que los casos de uso no nombran y `usuario` exige. Comisión inicial de distribuidor: 10 para Básico y 15 para Premium.
+
+- UC11: `POST /api/facturacion/facturas` con `titularId` y `período` (`AAAA-MM`), permiso `GenerarFactura`. El número `FAC-000123` sale de la secuencia `factura_numero_seq`. `Factura.emitir()` fija estado, emisión y vencimiento a 30 días.
+- `config/tarifas.js` no está en el modelo: precios de ejemplo, porque la especificación no los fija, y servicios en 0. Cliente: paquete por meses del plan más dominios. Distribuidor: dominios gestionados de un mes. Un dominio de cliente gestionado por un distribuidor se cobra a ambos, porque ningún caso de uso lo excluye. El desglose `cargos` solo va en la respuesta.
+- UC11 se dispara solo por el Administrador, como `UC-corregido.md` y la imagen; la especificación menciona además disparo automático. No hay regla contra dos facturas del mismo titular y periodo.
+- Cierre (ajuste aprobado): `cierre_mensual.fechaEjecución` es nullable y se llena al completar; `período` es UNIQUE y `comision` tiene UNIQUE (`distribuidorId`, `período`). En EA el UNIQUE compuesto consta en las notas de ambas columnas.
+- El diagrama de actividades 37 del `.qea` no refleja UC11: contiene elementos de UC12. La fuente válida es `actividad-uc11.png`.
+- UC12: `POST /api/facturacion/cierres` con `período` (`AAAA-MM`), permiso `EjecutarCierreMensual`. Periodo válido: formato, mes terminado (actividad) y no cerrado antes (extendido, 409). La fila de `cierre_mensual` se crea antes del bucle y `fechaEjecución` se llena al final; `ServicioDeCierreMensual` arma un `CierreMensual` por distribuidor pendiente y guarda cada uno en su transacción, así A2 retoma los activos sin comisión de ese mes. El resumen cuenta solo lo procesado en esa corrida.
+- UC13: dominios por COUNT sobre `dominio.distribuidorId` al cierre, sin fecha, porque `dominio` no la tiene. El aviso no tiene tabla: `avisoDeCategoría` vive en memoria y sale en el resumen.
+- UC14: monto facturado es la suma de facturas del distribuidor con `fechaEmisión` en el mes, en cualquier estado, redondeado al centavo. RF6 dice "por ciclo" y UC12 dice independiente del ciclo. A1: cheque en cero.
+- UC15: `BancoSimulado.emitirCheque` devuelve `CHQ-XXXXXXXX`. `GET /api/facturacion/cheques/:id/pdf`, con `pdfkit`, devuelve el PDF; `exportarPDF()` es asíncrono porque `pdfkit` genera por flujo.
+- En memoria y fuera del modelo: `Distribuidor.avisoDeCategoría`, `Comisión.montoFacturado`, `CierreMensual.pendientes`, `Cheque.comisión`. `COMISIÓN_POR_CATEGORÍA` pasó de `ServicioDePerfiles` a `Distribuidor.js`.
+- `npm test` usa `--test-concurrency=1`: el cierre toma a todos los distribuidores activos y chocaría con otras pruebas que crean y borran distribuidores. Las pruebas del cierre usan meses de 2020 y sí pueden recalcular la categoría de distribuidores reales si se corren contra una base con datos: usar base desechable.

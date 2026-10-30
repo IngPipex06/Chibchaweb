@@ -14,6 +14,7 @@ import { PaqueteDeHosting } from '../../dominio/perfiles/PaqueteDeHosting.js';
 import { PlanDePago } from '../../dominio/perfiles/PlanDePago.js';
 import { NivelDeServicio } from '../../dominio/soporte/NivelDeServicio.js';
 import { CategoríaDistribuidor } from '../../dominio/usuarios/CategoriaDistribuidor.js';
+import { COMISIÓN_POR_CATEGORÍA } from '../../dominio/usuarios/Distribuidor.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
 import { cargarUsuario, traducirDuplicado } from '../usuarios/ServicioDeUsuarios.js';
 import {
@@ -26,11 +27,6 @@ import {
 } from '../usuarios/validacion.js';
 import { respaldarEnArchivo } from '../respaldo/ServicioDeContingencia.js';
 import { validarTarjeta } from './ServicioDeMediosDePago.js';
-
-const COMISION_POR_CATEGORIA = Object.freeze({
-	[CategoríaDistribuidor.Básico]: 10,
-	[CategoríaDistribuidor.Premium]: 15,
-});
 
 /** UC5: filtro por rol de la fachada. */
 const GESTIONES = Object.freeze({
@@ -194,7 +190,7 @@ function guardarAltaDeDistribuidor({ fila, contraseñaHash, categoría }) {
 	return enTransaccion(async (conexion) => {
 		const id = await crearCuenta(fila.correo, contraseñaHash, conexion);
 		await DistribuidorGateway.insertar(
-			{ ...fila, id, categoría, comisiónAplicable: COMISION_POR_CATEGORIA[categoría] },
+			{ ...fila, id, categoría, comisiónAplicable: COMISIÓN_POR_CATEGORÍA[categoría] },
 			conexion,
 		);
 		return id;

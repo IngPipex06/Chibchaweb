@@ -33,6 +33,27 @@ export async function listar(busqueda) {
 	return rows;
 }
 
+/** UC12 y su A2: activos que aún no tienen comisión en ese mes. */
+export async function listarActivosSinComision(período) {
+	const { rows } = await pool.query(
+		`SELECT d.* FROM distribuidor d
+		JOIN usuario u ON u."id" = d."id"
+		WHERE u."estado" = 'Activo'
+			AND NOT EXISTS (SELECT 1 FROM comision c WHERE c."distribuidorId" = d."id" AND c."período" = $1::date)
+		ORDER BY d."razónSocial"`,
+		[`${período}-01`],
+	);
+	return rows;
+}
+
+export async function actualizarCategoria(fila, conexion = pool) {
+	await conexion.query('UPDATE distribuidor SET "categoría" = $2, "comisiónAplicable" = $3 WHERE "id" = $1', [
+		fila.id,
+		fila.categoría,
+		fila.comisiónAplicable,
+	]);
+}
+
 export async function obtenerFicha(id) {
 	const { rows } = await pool.query(`${CONSULTA_FICHA} WHERE d."id" = $1`, [id]);
 	return rows[0] ?? null;
