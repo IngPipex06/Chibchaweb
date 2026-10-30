@@ -11,7 +11,6 @@ export class Factura {
 	#número;
 	#pagador;
 	#período;
-	#comprobanteDePago;
 
 	constructor(datos = {}) {
 		this.#estado = datos.estado ?? EstadoFactura.Pendiente;
@@ -21,7 +20,6 @@ export class Factura {
 		this.#número = datos.número ?? null;
 		this.#pagador = datos.pagador ?? null;
 		this.#período = datos.período ?? null;
-		this.#comprobanteDePago = datos.comprobanteDePago ?? null;
 	}
 
 	emitir() {

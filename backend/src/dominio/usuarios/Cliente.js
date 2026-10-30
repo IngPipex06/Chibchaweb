@@ -10,7 +10,6 @@ export class Cliente extends Titular {
 	#planDePago;
 	#teléfono;
 	#tipoDocumento;
-	#solicitudes;
 
 	constructor(datos = {}) {
 		super(datos);
@@ -23,6 +22,5 @@ export class Cliente extends Titular {
 		this.#planDePago = datos.planDePago ?? null;
 		this.#teléfono = datos.teléfono ?? null;
 		this.#tipoDocumento = datos.tipoDocumento ?? null;
-		this.#solicitudes = datos.solicitudes ?? null;
 	}
 }
