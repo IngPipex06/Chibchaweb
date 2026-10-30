@@ -18,5 +18,6 @@ export class PasarelaDePagoSimulada {
 	 * @returns {boolean}
 	 */
 	cobrar(medio, monto) {
+		return true;
 	}
 }

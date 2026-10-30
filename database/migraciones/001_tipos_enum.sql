@@ -4,6 +4,7 @@ CREATE TYPE plan_de_pago AS ENUM ('Mensual', 'Trimestral', 'Semestral', 'Anual')
 CREATE TYPE categoria_distribuidor AS ENUM ('Básico', 'Premium');
 CREATE TYPE nivel_de_servicio AS ENUM ('Nivel1', 'Nivel2', 'Nivel3');
 CREATE TYPE tipo_tarjeta AS ENUM ('Visa', 'Mastercard', 'Diners');
+CREATE TYPE estado_medio_de_pago AS ENUM ('Activa', 'Inactiva');
 CREATE TYPE estado_factura AS ENUM ('Pendiente', 'Pagada', 'Vencida');
 CREATE TYPE estado_comprobante AS ENUM ('Exitoso', 'Fallido');
 CREATE TYPE estado_solicitud_dominio AS ENUM ('Generada', 'Enviada');

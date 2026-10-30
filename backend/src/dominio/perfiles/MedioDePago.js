@@ -1,6 +1,8 @@
 import { PasarelaDePagoSimulada } from '../pagos/PasarelaDePagoSimulada.js';
+import { EstadoMedioDePago } from './EstadoMedioDePago.js';
 
 export class MedioDePago {
+	#estado;
 	#fechaExpiración;
 	/**
 	 * Clave primaria técnica, sin significado de negocio
@@ -15,10 +17,15 @@ export class MedioDePago {
 
 	constructor(datos = {}) {
 		if (new.target === MedioDePago) throw new Error('MedioDePago es abstracta');
+		this.#estado = datos.estado ?? EstadoMedioDePago.Activa;
 		this.#fechaExpiración = datos.fechaExpiración ?? null;
 		this.#id = datos.id ?? null;
 		this.#numero = datos.numero ?? null;
 		this.#numeroEnmascarado = datos.numeroEnmascarado ?? this.#enmascarar();
+	}
+
+	get estado() {
+		return this.#estado;
 	}
 
 	get fechaExpiración() {

@@ -1,3 +1,7 @@
+import { formatearFecha } from '../facturacion/Factura.js';
+import { EstadoComprobante } from './EstadoComprobante.js';
+import { PasarelaDePagoSimulada } from './PasarelaDePagoSimulada.js';
+
 export class ComprobanteDePago {
 	#estado;
 	#factura;
@@ -18,11 +22,30 @@ export class ComprobanteDePago {
 		this.#monto = datos.monto ?? null;
 	}
 
+	get estado() {
+		return this.#estado;
+	}
+
+	get fecha() {
+		return this.#fecha;
+	}
+
+	get monto() {
+		return this.#monto;
+	}
+
 	/**
 	 * @param {Factura} factura
 	 * @param {MedioDePago} medioDePago
 	 * @returns {ComprobanteDePago}
 	 */
 	procesarCobro(factura, medioDePago) {
+		const aprobado = new PasarelaDePagoSimulada().cobrar(medioDePago, factura.monto);
+		this.#factura = factura;
+		this.#medioDePago = medioDePago;
+		this.#monto = factura.monto;
+		this.#fecha = formatearFecha(new Date());
+		this.#estado = aprobado ? EstadoComprobante.Exitoso : EstadoComprobante.Fallido;
+		return this;
 	}
 }

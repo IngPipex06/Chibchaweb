@@ -51,7 +51,7 @@ async function crearCuenta(correo, contraseña, conexion) {
 }
 
 /** RT4: crear y editar de los tres perfiles. Lo que se respalda es lo que recibirá `guardar` al reconciliar. */
-async function persistir({ guardar, datos, origen, campos, obtener }) {
+export async function persistir({ guardar, datos, origen, campos, obtener }) {
 	let id;
 	try {
 		id = await guardar(datos);

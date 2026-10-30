@@ -15,6 +15,29 @@ export async function insertar(fila, conexion = pool) {
 	return rows[0].id;
 }
 
+export async function listarPorCobrar() {
+	const { rows } = await pool.query(
+		`SELECT "id" FROM factura WHERE "estado" IN ('Pendiente', 'Vencida') ORDER BY "fechaEmisión", "id"`,
+	);
+	return rows;
+}
+
+/** Bloquea la factura: dos cobros simultáneos no pueden cobrarla dos veces. */
+export async function bloquearPorCobrar(id, conexion) {
+	const { rows } = await conexion.query(
+		`SELECT "id", "usuarioPagadorId", "monto"::float8 AS "monto", "estado",
+			to_char("fechaVencimiento", 'YYYY-MM-DD') AS "fechaVencimiento"
+		FROM factura WHERE "id" = $1 AND "estado" IN ('Pendiente', 'Vencida')
+		FOR UPDATE`,
+		[id],
+	);
+	return rows[0] ?? null;
+}
+
+export async function actualizarEstado(id, estado, conexion = pool) {
+	await conexion.query('UPDATE factura SET "estado" = $2 WHERE "id" = $1', [id, estado]);
+}
+
 /** UC14: cualquier estado, por mes de emisión. */
 export async function sumarMontoDelMes(pagadorId, período) {
 	const { rows } = await pool.query(

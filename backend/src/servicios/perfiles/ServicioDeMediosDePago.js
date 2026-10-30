@@ -11,6 +11,11 @@ const FRANQUICIAS = Object.freeze({
 	Diners: TarjetaDiners,
 });
 
+/** Reconstruye la tarjeta de una fila; sin el número completo, que no se guarda. */
+export function crearTarjeta(fila) {
+	return new FRANQUICIAS[fila.tipoTarjeta](fila);
+}
+
 function rechazarTarjeta(errores) {
 	return new ErrorDeServicio(400, `Tarjeta inválida: ${errores.join(', ')}`, 'tarjeta', { errores });
 }

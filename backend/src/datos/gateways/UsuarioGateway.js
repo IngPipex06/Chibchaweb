@@ -10,6 +10,11 @@ export async function buscarPorCorreo(correo) {
 	return rows[0] ?? null;
 }
 
+/** Serializa las operaciones que dependen de las tarjetas activas del titular. */
+export async function bloquear(id, conexion) {
+	await conexion.query('SELECT 1 FROM usuario WHERE "id" = $1 FOR UPDATE', [id]);
+}
+
 export async function insertar(fila, conexion = pool) {
 	const { rows } = await conexion.query(
 		`INSERT INTO usuario ("correo", "contraseña", "preguntaSeguridad", "respuestaSeguridad")

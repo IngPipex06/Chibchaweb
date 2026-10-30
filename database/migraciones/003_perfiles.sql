@@ -3,5 +3,6 @@ CREATE TABLE medio_de_pago (
 	"titularId" UUID NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
 	"tipoTarjeta" tipo_tarjeta NOT NULL,
 	"numeroEnmascarado" VARCHAR(25) NOT NULL,
-	"fechaExpiración" DATE NOT NULL
+	"fechaExpiración" DATE NOT NULL,
+	"estado" estado_medio_de_pago NOT NULL DEFAULT 'Activa'
 );

@@ -128,6 +128,7 @@ dominio/
 │   ├── TarjetaVisa.js
 │   ├── TarjetaMastercard.js
 │   ├── TarjetaDiners.js
+│   ├── EstadoMedioDePago.js       enumeración
 │   ├── PaqueteDeHosting.js        enumeración
 │   └── PlanDePago.js              enumeración
 ├── facturacion/
@@ -258,7 +259,7 @@ Las migraciones salen del diagrama entidad-relación. Las columnas conservan el 
 - UC2 E2: `ServicioDeAutenticacion` responde `ofrecerRecuperacion: true` en cada fallo, como el diagrama, y cuenta en memoria los fallos por correo para marcar `limiteDeIntentosAlcanzado` al quinto, como el caso de uso extendido. No bloquea la cuenta y se pierde al reiniciar.
 - UC9: nadie cambia su propio rol ni inhabilita su propia cuenta. Son reglas adicionales a los casos de uso.
 - UC8: una franquicia no aceptada se rechaza sin listar otros errores, como en el diagrama. UC6 verifica el documento antes de UC7 y UC8; UC9 y UC10 dependen de la restricción UNIQUE.
-- Tarjetas: la vigencia solo se valida al ingresarlas, y no hay estados de tarjeta. El front muestra `Inhabilitado` como "Inactivo".
+- Tarjetas: la vigencia solo se valida al ingresarlas. El front muestra `Inhabilitado` como "Inactivo".
 - `MedioDePago` recibe el número completo en el constructor, lo guarda solo en memoria y deriva `numeroEnmascarado`, porque `validar()` no tiene parámetros y Luhn, longitud y prefijo necesitan el número. También expone `motivosDeRechazo` para la lista de errores de UC8; `Dirección` expone `erroresDeFormato` para UC7. A la base solo llega el número enmascarado, por eso editar un cliente exige reingresar la tarjeta (UC6 paso 8); si es la misma, no se duplica la fila.
 - `PasarelaDePagoSimulada.autorizar` siempre aprueba. Las altas por administrador de UC6 y UC10 piden `correo` y `contraseña`, que los casos de uso no nombran y `usuario` exige. Comisión inicial de distribuidor: 10 para Básico y 15 para Premium.
 
@@ -272,4 +273,9 @@ Las migraciones salen del diagrama entidad-relación. Las columnas conservan el 
 - UC14: monto facturado es la suma de facturas del distribuidor con `fechaEmisión` en el mes, en cualquier estado, redondeado al centavo. RF6 dice "por ciclo" y UC12 dice independiente del ciclo. A1: cheque en cero.
 - UC15: `BancoSimulado.emitirCheque` devuelve `CHQ-XXXXXXXX`. `GET /api/facturacion/cheques/:id/pdf`, con `pdfkit`, devuelve el PDF; `exportarPDF()` es asíncrono porque `pdfkit` genera por flujo.
 - En memoria y fuera del modelo: `Distribuidor.avisoDeCategoría`, `Comisión.montoFacturado`, `CierreMensual.pendientes`, `Cheque.comisión`. `COMISIÓN_POR_CATEGORÍA` pasó de `ServicioDePerfiles` a `Distribuidor.js`.
+- UC16: `GET /api/pagos` devuelve las dos opciones. Las rutas de pagos son solo para titulares (`exigirTitular`), salvo el cobro.
+- UC17: `/api/pagos/medios` (GET, POST, PUT/:id, DELETE/:id). Modificar reingresa el número, inactiva la fila anterior e inserta otra, así que el id cambia; los comprobantes viejos conservan su tarjeta. `estado` de `MedioDePago` es borrado lógico: las inactivas no se listan, no se cobran y no cuentan como repetidas. Tarjeta repetida: misma franquicia, número enmascarado y vencimiento (409). Servicios vigentes de A3: el Cliente siempre, el Distribuidor si gestiona al menos un dominio.
+- UC17 RT4: `persistir` cubre alta y modificación con `OrigenRespaldo.MedioDePago` (202). `aplicadoresDeRespaldoDePagos` es idempotente, no revive una tarjeta eliminada y se combina en `scripts/reconciliar.js`, porque pagos depende de perfiles. Eliminar no tiene contingencia, los casos de uso solo la piden al guardar.
+- Cobro (RF4): ningún caso de uso lo describe. `POST /api/pagos/cobros`, permiso `GenerarFactura`, lo dispara el Administrador como UC12 y recorre facturas `Pendiente` y `Vencida`, cada una en su transacción con la factura bloqueada. Aprobado: comprobante `Exitoso` y factura `Pagada`. Rechazado: comprobante `Fallido`. Sin tarjeta activa no hay comprobante. Sin pago y con `fechaVencimiento` pasada, `Vencida`. Tarjeta elegida: mayor vencimiento, desempate por id, porque `medio_de_pago` no guarda fecha de creación. No se revalida la vigencia al cobrar.
+- UC18: `/api/pagos/comprobantes` (listado), `/:id` (detalle) y `/:id/recibo` (PDF, solo `Exitoso`). `ComprobanteDePago` no tiene método de exportar, así que el PDF lo genera `ServicioDePagos`. Cada titular ve solo lo suyo: lo ajeno responde 404.
 - `npm test` usa `--test-concurrency=1`: el cierre toma a todos los distribuidores activos y chocaría con otras pruebas que crean y borran distribuidores. Las pruebas del cierre usan meses de 2020 y sí pueden recalcular la categoría de distribuidores reales si se corren contra una base con datos: usar base desechable.
