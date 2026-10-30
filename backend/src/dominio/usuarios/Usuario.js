@@ -41,9 +41,11 @@ export class Usuario {
 	}
 
 	activar() {
+		this.#estado = EstadoUsuario.Activo;
 	}
 
 	inhabilitar() {
+		this.#estado = EstadoUsuario.Inhabilitado;
 	}
 
 	/**

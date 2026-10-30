@@ -6,6 +6,7 @@ export class TarjetaDiners extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarLongitud() {
+		return this.numero.length === 14;
 	}
 
 	/**
@@ -13,5 +14,7 @@ export class TarjetaDiners extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarPrefijo() {
+		const tresDigitos = Number(this.numero.slice(0, 3));
+		return /^3[68]/.test(this.numero) || (tresDigitos >= 300 && tresDigitos <= 305);
 	}
 }

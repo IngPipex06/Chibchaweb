@@ -94,7 +94,7 @@ export function describirPerfil(usuario) {
 	return perfil;
 }
 
-function traducirDuplicado(error, campos) {
+export function traducirDuplicado(error, campos) {
 	if (error.code !== VIOLACION_UNIQUE) return error;
 	const campo = campos.find((nombre) => error.constraint?.includes(nombre));
 	return new ErrorDeServicio(409, 'El valor ya está registrado', campo);

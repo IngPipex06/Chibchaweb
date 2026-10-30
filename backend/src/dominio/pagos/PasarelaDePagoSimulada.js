@@ -9,6 +9,7 @@ export class PasarelaDePagoSimulada {
 	 * @returns {boolean}
 	 */
 	autorizar(medio) {
+		return true;
 	}
 
 	/**

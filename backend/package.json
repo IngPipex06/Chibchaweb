@@ -12,6 +12,7 @@
     "start": "node --openssl-legacy-provider --env-file=.env src/servidor.js",
     "dev": "node --openssl-legacy-provider --env-file=.env --watch src/servidor.js",
     "test": "node --openssl-legacy-provider --env-file=.env --test \"test/**/*.test.js\"",
-    "crear-admin": "node --env-file=.env scripts/crearAdministrador.js"
+    "crear-admin": "node --env-file=.env scripts/crearAdministrador.js",
+    "reconciliar": "node --openssl-legacy-provider --env-file=.env scripts/reconciliar.js"
   }
 }

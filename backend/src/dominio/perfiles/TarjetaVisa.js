@@ -6,6 +6,7 @@ export class TarjetaVisa extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarLongitud() {
+		return [13, 16, 19].includes(this.numero.length);
 	}
 
 	/**
@@ -13,5 +14,6 @@ export class TarjetaVisa extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarPrefijo() {
+		return this.numero.startsWith('4');
 	}
 }

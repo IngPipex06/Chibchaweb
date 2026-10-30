@@ -19,6 +19,14 @@ export async function insertar(fila, conexion = pool) {
 	return rows[0].id;
 }
 
+export async function actualizarCorreo(id, correo, conexion = pool) {
+	await conexion.query('UPDATE usuario SET "correo" = $2 WHERE "id" = $1', [id, correo]);
+}
+
+export async function actualizarEstado(id, estado) {
+	await pool.query('UPDATE usuario SET "estado" = $2 WHERE "id" = $1', [id, estado]);
+}
+
 export async function actualizarContraseña(id, contraseña) {
 	await pool.query('UPDATE usuario SET "contraseña" = $2 WHERE "id" = $1', [id, contraseña]);
 }

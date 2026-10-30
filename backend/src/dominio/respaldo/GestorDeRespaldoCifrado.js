@@ -1,3 +1,6 @@
+import { AlgoritmoDeCifradoAES256 } from './AlgoritmoDeCifradoAES256.js';
+import { ArchivoDeRespaldoCifrado } from './ArchivoDeRespaldoCifrado.js';
+
 export class GestorDeRespaldoCifrado {
 	#algoritmoActivo;
 	#archivosDeRespaldo;
@@ -14,11 +17,21 @@ export class GestorDeRespaldoCifrado {
 
 	/**
 	 * @param {string} datos
+	 * @param {string} origen
 	 * @returns {ArchivoDeRespaldoCifrado}
 	 */
-	respaldar(datos) {
+	respaldar(datos, origen) {
+		const archivo = new ArchivoDeRespaldoCifrado({
+			contenidoCifrado: this.#seleccionarAlgoritmo().cifrar(datos),
+			fecha: new Date().toISOString(),
+			origen,
+		});
+		this.#archivosDeRespaldo.push(archivo);
+		return archivo;
 	}
 
 	#seleccionarAlgoritmo() {
+		this.#algoritmoActivo ??= new AlgoritmoDeCifradoAES256();
+		return this.#algoritmoActivo;
 	}
 }

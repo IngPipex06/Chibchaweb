@@ -37,5 +37,6 @@ export class Rol {
 	 * @returns {boolean}
 	 */
 	tienePermiso(nombrePermiso) {
+		return this.#permisos.some((permiso) => permiso.nombre === nombrePermiso);
 	}
 }

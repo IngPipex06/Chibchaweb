@@ -6,6 +6,7 @@ export class TarjetaMastercard extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarLongitud() {
+		return this.numero.length === 16;
 	}
 
 	/**
@@ -13,5 +14,8 @@ export class TarjetaMastercard extends MedioDePago {
 	 * @returns {boolean}
 	 */
 	validarPrefijo() {
+		const dosDigitos = Number(this.numero.slice(0, 2));
+		const cuatroDigitos = Number(this.numero.slice(0, 4));
+		return (dosDigitos >= 51 && dosDigitos <= 55) || (cuatroDigitos >= 2221 && cuatroDigitos <= 2720);
 	}
 }

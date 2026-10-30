@@ -4,7 +4,7 @@ import { ErrorDeServicio } from '../../servicios/ErrorDeServicio.js';
 // eslint-disable-next-line no-unused-vars
 export function manejarErrores(error, req, res, next) {
 	if (error instanceof ErrorDeServicio) {
-		return res.status(error.estado).json({ error: error.message, campo: error.campo });
+		return res.status(error.estado).json({ error: error.message, campo: error.campo, ...error.extras });
 	}
 	if (error.type === 'entity.parse.failed') {
 		return res.status(400).json({ error: 'El cuerpo de la petición no es JSON válido', campo: null });

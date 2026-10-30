@@ -9,17 +9,38 @@ import { exigirContraseñaNueva, exigirCorreo, exigirValorHasheable } from './va
 const CREDENCIALES_INCORRECTAS = 'Identificador o contraseña incorrectos';
 const RECUPERACION_NO_DISPONIBLE = 'La cuenta no admite recuperación de contraseña';
 
+const LIMITE_DE_INTENTOS = 5;
+const MAXIMO_DE_CORREOS_EN_SEGUIMIENTO = 10000;
+
+/**
+ * UC2 E2: la recuperación se ofrece en cada fallo y el contador marca el límite.
+ * En memoria, fuera del dominio. Cuenta también correos inexistentes
+ * para que la respuesta no revele cuáles están registrados.
+ */
+const intentosFallidos = new Map();
+
+function rechazarCredenciales(correo) {
+	if (intentosFallidos.size >= MAXIMO_DE_CORREOS_EN_SEGUIMIENTO) intentosFallidos.clear();
+	const intentos = (intentosFallidos.get(correo) ?? 0) + 1;
+	intentosFallidos.set(correo, intentos);
+	return new ErrorDeServicio(401, CREDENCIALES_INCORRECTAS, null, {
+		ofrecerRecuperacion: true,
+		limiteDeIntentosAlcanzado: intentos >= LIMITE_DE_INTENTOS,
+	});
+}
+
 /** UC2. Una cuenta inhabilitada solo se revela con credenciales correctas (E3). */
 export async function iniciarSesion({ correo, contraseña }) {
 	const correoValido = exigirCorreo(correo);
 	const contraseñaValida = exigirValorHasheable(contraseña, 'contraseña');
 
 	const fila = await UsuarioGateway.buscarPorCorreo(correoValido);
-	if (!fila) throw new ErrorDeServicio(401, CREDENCIALES_INCORRECTAS);
+	if (!fila) throw rechazarCredenciales(correoValido);
 	const usuario = await cargarUsuario(fila);
 	if (!(await usuario.iniciarSesión(contraseñaValida))) {
-		throw new ErrorDeServicio(401, CREDENCIALES_INCORRECTAS);
+		throw rechazarCredenciales(correoValido);
 	}
+	intentosFallidos.delete(correoValido);
 	if (usuario.estado !== EstadoUsuario.Activo) {
 		throw new ErrorDeServicio(403, 'Cuenta inactiva, contacte al administrador');
 	}
@@ -36,12 +57,16 @@ export function verificarToken(token) {
 	}
 }
 
-export async function obtenerPerfil(id) {
+export async function cargarUsuarioDeSesion(id) {
 	const fila = await UsuarioGateway.buscarPorId(id);
 	if (!fila || fila.estado !== EstadoUsuario.Activo) {
 		throw new ErrorDeServicio(401, 'La sesión no es válida o expiró');
 	}
-	return describirPerfil(await cargarUsuario(fila));
+	return cargarUsuario(fila);
+}
+
+export async function obtenerPerfil(id) {
+	return describirPerfil(await cargarUsuarioDeSesion(id));
 }
 
 async function cargarCuentaRecuperable(correo) {

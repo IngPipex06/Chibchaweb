@@ -1,6 +1,6 @@
 # Mapa de archivos de ChibchaWeb
 
-Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, los de `database/` y, en `backend/`, lo que usan UC1 a UC4 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 54 de `backend/src/dominio/`, exportados desde Enterprise Architect, los de `database/` y, en `backend/`, lo que usan UC1 a UC10 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
 
 ## Tres niveles
 
@@ -79,7 +79,7 @@ backend/
     │       ├── solicitudes.rutas.js
     │       ├── soporte.rutas.js
     │       └── migracion.rutas.js
-    ├── servicios/               capa de servicios (ver "Por definir")
+    ├── servicios/               capa de servicios
     ├── dominio/                 54 archivos, uno por clase del modelo
     └── datos/
         └── gateways/            20 archivos, uno por tabla
@@ -247,12 +247,17 @@ Las migraciones salen del diagrama entidad-relación. Las columnas conservan el 
 
 - API con Express 5 y PostgreSQL con `pg`. Contraseñas y respuestas de seguridad con bcrypt (costo 12, máximo 72 bytes). Sesión con JWT en la cabecera `Authorization: Bearer`.
 - Rutas en `/api/usuarios`: `POST /registro` (UC1), `POST /sesion` (UC2), `POST /recuperacion/pregunta` y `POST /recuperacion` (UC3 y UC4), `GET /perfil`.
-- Gateways: usuario, cliente, distribuidor, empleado, administrador, técnico de soporte, rol y permiso, cada uno con las consultas que ya se usan.
+- Rutas en `/api/perfiles` (UC5 a UC10): `GET /gestiones`; y en `/clientes`, `/personal` y `/distribuidores`: `GET /` (con `?buscar=`), `GET /:id`, `POST /`, `PUT /:id` y `POST /:id/inhabilitar`. Solo clientes tiene `POST /:id/reactivar`. Cada grupo exige su permiso con `exigirPermiso` (`api/middleware/autorizacion.js`).
+- Gateways: usuario, cliente, distribuidor, empleado, administrador, técnico de soporte, rol, permiso y medio de pago, cada uno con las consultas que ya se usan.
 - Uso: `cp backend/.env.example backend/.env`, igualar la clave de `DATABASE_URL` con la del `.env` de la raíz, y `npm install` y `npm start` dentro de `backend/`. `npm test` necesita la base levantada.
 - Primer administrador: `ADMIN_CORREO=... ADMIN_CONTRASENA=... ADMIN_NOMBRE=... ADMIN_DOCUMENTO=... ADMIN_ROL="Administrador de Personal" npm run crear-admin`. UC9 no sirve para esto porque ya exige un administrador.
 - Cifrado de respaldos con `crypto` de Node para los cuatro algoritmos, sin dependencias: `aes-256-gcm`, `chacha20-poly1305`, `bf-cbc` y `des-ede3-cbc`. Blowfish vive en el proveedor legacy de OpenSSL 3, por eso los scripts de `backend/package.json` usan `--openssl-legacy-provider`; sin esa opción el servidor no arranca. Blowfish y Triple DES no detectan alteraciones del archivo. La clave maestra es `CLAVE_RESPALDO`: si se pierde, los respaldos no se pueden descifrar.
 - `config/hash.js`, `config/cifrado.js` y `servicios/usuarios/validacion.js` son apoyo de código y no están en el modelo. En el dominio, `iniciarSesión` y `validarRespuesta` devuelven una promesa de booleano, porque bcrypt es asíncrono.
 
-## Por definir
-
-- Contador de intentos fallidos de UC2 (E2, pasos 5.2 y 5.3): no hay atributo ni columna en el modelo, ni límite definido.
+- Contingencia RT4 (UC6, UC9 y UC10, crear y editar): `persistir` en `ServicioDePerfiles` detecta la caída con `config/baseDeDatos.js` y `servicios/respaldo/ServicioDeContingencia.js` cifra los datos con `GestorDeRespaldoCifrado` y los agrega a `RUTA_RESPALDO`, con el algoritmo de `ALGORITMO_RESPALDO`. La API responde 202. Lo pendiente es lo que siga en el archivo, no un estado. `npm run reconciliar` lo aplica con `aplicadoresDeRespaldo` cuando la base vuelve y conserva lo que no se pueda aplicar. Una edición respaldada sobrescribe lo que se haya cambiado después en ese perfil.
+- UC2 E2: `ServicioDeAutenticacion` responde `ofrecerRecuperacion: true` en cada fallo, como el diagrama, y cuenta en memoria los fallos por correo para marcar `limiteDeIntentosAlcanzado` al quinto, como el caso de uso extendido. No bloquea la cuenta y se pierde al reiniciar.
+- UC9: nadie cambia su propio rol ni inhabilita su propia cuenta. Son reglas adicionales a los casos de uso.
+- UC8: una franquicia no aceptada se rechaza sin listar otros errores, como en el diagrama. UC6 verifica el documento antes de UC7 y UC8; UC9 y UC10 dependen de la restricción UNIQUE.
+- Tarjetas: la vigencia solo se valida al ingresarlas, y no hay estados de tarjeta. El front muestra `Inhabilitado` como "Inactivo".
+- `MedioDePago` recibe el número completo en el constructor, lo guarda solo en memoria y deriva `numeroEnmascarado`, porque `validar()` no tiene parámetros y Luhn, longitud y prefijo necesitan el número. También expone `motivosDeRechazo` para la lista de errores de UC8; `Dirección` expone `erroresDeFormato` para UC7. A la base solo llega el número enmascarado, por eso editar un cliente exige reingresar la tarjeta (UC6 paso 8); si es la misma, no se duplica la fila.
+- `PasarelaDePagoSimulada.autorizar` siempre aprueba. Las altas por administrador de UC6 y UC10 piden `correo` y `contraseña`, que los casos de uso no nombran y `usuario` exige. Comisión inicial de distribuidor: 10 para Básico y 15 para Premium.
