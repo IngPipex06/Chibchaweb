@@ -12,6 +12,8 @@ export class NivelDeServicio {
 	 * @returns {NivelDeServicio}
 	 */
 	siguiente() {
+		if (this === NivelDeServicio.Nivel1) return NivelDeServicio.Nivel2;
+		return NivelDeServicio.Nivel3;
 	}
 }
 

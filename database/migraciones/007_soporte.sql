@@ -8,5 +8,9 @@ CREATE TABLE ticket (
 	"estado" estado_ticket NOT NULL DEFAULT 'Abierto',
 	"fechaCreación" TIMESTAMP NOT NULL,
 	"nivelActual" nivel_de_servicio NOT NULL DEFAULT 'Nivel1',
-	"fechaInicioSLA" TIMESTAMP NOT NULL
+	"fechaInicioSLA" TIMESTAMP NOT NULL,
+	"solución" VARCHAR(500),
+	"fechaToma" TIMESTAMP,
+	"motivoEscalamiento" VARCHAR(500),
+	"notaDeAvance" VARCHAR(500)
 );
