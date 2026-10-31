@@ -1,12 +1,12 @@
 # Mapa de archivos de ChibchaWeb
 
-Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 55 de `backend/src/dominio/`, exportados desde Enterprise Architect, más `perfiles/Franquicias.js`, fuera del modelo, los de `database/` y, en `backend/`, lo que usan UC1 a UC26 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. La plantilla de Vite sigue en la raíz hasta que se mueva a `frontend/`.
+Estructura del repositorio. Las carpetas ya están creadas. De los archivos que se listan aquí existen los 55 de `backend/src/dominio/`, exportados desde Enterprise Architect, más `perfiles/Franquicias.js`, fuera del modelo, los de `database/` y, en `backend/`, lo que usan UC1 a UC26 (ver "Backend construido"). El resto de gateways, rutas y servicios se crea con su funcionalidad. El frontend está en `frontend/`.
 
 ## Tres niveles
 
 | Nivel | Carpeta | Tecnología | Contiene |
 |---|---|---|---|
-| Presentación | `frontend/` | React con Vite | Pantallas por rol; solo habla con la API |
+| Presentación | `frontend/` | React, React Router y Vite (JavaScript) | Pantallas por rol; solo habla con la API |
 | Lógica | `backend/` | Node.js (JavaScript) | API, capa de servicios, dominio y *gateways* |
 | Datos | `database/` | PostgreSQL | Esquema, tipos `ENUM` y datos iniciales |
 
@@ -15,7 +15,6 @@ Estructura del repositorio. Las carpetas ya están creadas. De los archivos que 
 ```text
 code/
 ├── README.md
-├── package.json                 scripts de todo el repositorio (workspaces)
 ├── docker-compose.yml           PostgreSQL en contenedor
 ├── .env.example                 credenciales y puerto de la base de datos
 ├── .gitignore
@@ -27,30 +26,61 @@ code/
 
 ## frontend/
 
-La plantilla actual se mueve aquí y se pasa de TypeScript a JavaScript. El detalle de las pantallas se define con el trabajo de UX/UI.
+React 19, React Router 7 y Vite 8, en JavaScript. Solo conoce la API: todas las llamadas salen de `src/api/` y van a rutas relativas `/api`, que Vite reenvía a `http://localhost:3000` porque el backend no tiene CORS.
 
 ```text
 frontend/
-├── package.json, package-lock.json
-├── index.html
-├── vite.config.js
+├── package.json                 se instala por su cuenta, igual que backend/
+├── index.html                   carga Plus Jakarta Sans y Space Grotesk
+├── vite.config.js               proxy de /api en dev y preview
 ├── eslint.config.js
-├── public/                      logos e íconos actuales
+├── public/                   favicon.svg y logos tunjoLogo (.svg, .jpg, BB.svg), sin uso aún
 └── src/
     ├── main.jsx
-    ├── App.jsx
-    ├── index.css
+    ├── App.jsx                  sesión, encabezado, rutas y pie
+    ├── index.css                paleta, tipografía y clases de la interfaz
     ├── assets/
-    ├── rutas/                   rutas y protección por rol
-    ├── api/                     llamadas HTTP al backend
-    ├── componentes/             piezas reutilizables
+    ├── api/
+    │   ├── http.js              token, 401, errores { error, campo, ...extras }, 202 y descargas con blob
+    │   ├── servicios.js         una función por endpoint
+    │   └── sesion.js            contexto de sesión, inicio por tipo y correo recordado
+    ├── rutas/
+    │   ├── Rutas.jsx            árbol de rutas por rol
+    │   └── Proteccion.jsx       RutaProtegida (tipo y permiso) y SoloSinSesion
+    ├── componentes/
+    │   ├── Interfaz.jsx         Pagina, Tarjeta, Aviso, Tabla, Ficha, Resumen, Accesos, Etiqueta
+    │   ├── Formulario.jsx       campos declarativos, errores por campo y por bloque
+    │   ├── Dialogo.jsx          confirmaciones y textos de técnico
+    │   ├── Encabezado.jsx       menú según tipo y permisos
+    │   ├── ProveedorDeSesion.jsx
+    │   ├── ganchos.js           useDatos, useEnvio (doble envío), useFormulario, useBloqueo
+    │   ├── validacion.js        formatos iguales a los del backend
+    │   ├── avisos.js · formato.js · valores.js · navegacion.js · camposComunes.js
+    │   └── titular/             compartido entre Cliente y Distribuidor
+    │       ├── InicioTitular.jsx
+    │       ├── AreaDePagos.jsx  UC16
+    │       ├── MediosDePago.jsx UC17, UC8
+    │       ├── Comprobantes.jsx UC18
+    │       └── Soporte.jsx      UC22
     └── paginas/
-        ├── publico/             portal, inicio de sesión, registro
-        ├── cliente/
-        ├── distribuidor/
-        ├── administrador/
-        └── tecnico/
+        ├── publico/             Portal (UC0), Registro (UC1), InicioSesion (UC2), RecuperarContrasena (UC3, UC4)
+        ├── cliente/             InicioCliente, Solicitudes (UC19 a UC21)
+        ├── distribuidor/        InicioDistribuidor
+        ├── administrador/       InicioAdministrador (UC5), GestionDePerfiles y configuracionDeGestiones (UC6 a UC10),
+        │                        Facturacion (UC11, RF4), CierreMensual (UC12 a UC15), Migracion (UC26 a UC28)
+        └── tecnico/             Tablero (UC23 a UC25)
 ```
+
+### Decisiones del frontend
+
+- Pagos y soporte no se duplican: viven en `componentes/titular/` y `rutas/Rutas.jsx` los monta bajo `/cliente` y `/distribuidor`.
+- La protección de rutas solo orienta; la seguridad está en el backend. Un 401 fuera de los formularios de acceso olvida el token y lleva a iniciar sesión.
+- El 202 se muestra como "pendiente de reconciliación" y no abre ni cuenta el registro, salvo en migración, donde sí trae `id`.
+- Bloqueo de 3 minutos: en inicio de sesión se activa con `limiteDeIntentosAlcanzado`; en registro lo cuenta el front. El fin del bloqueo se guarda en el navegador (hueco 8).
+- Los `id` de migración se guardan en el navegador (hueco 2). Pausar solo se ofrece cuando ya se conoce el `id` (hueco 1) y no lo bloquea una reanudación abierta.
+- Facturación ofrece solo los titulares que el rol puede listar (hueco 3). Facturas, cierres y cheques avisan que no se consultan después (huecos 4 y 5).
+- Los datos de tarjeta solo viven en memoria mientras se escribe el formulario; nunca se guardan en el navegador.
+- Paleta: #64C9ED, #EDE564, #ED6484, #98737B, #606A6E, #6E6D60. #EDE564 solo en llamadas de atención críticas. Ningún estado se comunica solo con color.
 
 ## backend/
 

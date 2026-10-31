@@ -10,15 +10,13 @@ Atiende clientes, distribuidores, técnicos de soporte y administradores: regist
 |---|---|
 | Base de datos | Construida |
 | Backend | Construido (UC1 a UC26) |
-| Frontend | Sin construir |
-
-La carpeta `src/` de la raíz sigue siendo la plantilla de Vite y debe moverse a `frontend/`.
+| Frontend | Construido (React, React Router y Vite en JavaScript) |
 
 ## Tecnologías
 
 - **Backend:** Node.js 22 y Express 5
 - **Base de datos:** PostgreSQL 17 en Docker
-- **Frontend previsto:** React con Vite
+- **Frontend:** React 19, React Router 7 y Vite 8, en JavaScript
 
 ## Estructura
 
@@ -34,8 +32,12 @@ code/
 │   ├── scripts/          crear administrador y reconciliar respaldos
 │   └── test/             pruebas de dominio y de API
 ├── database/             migraciones, semillas e iniciar.sh
-├── frontend/             pendiente
-└── IA/                   mapa-de-archivos.md
+└── frontend/
+    └── src/
+        ├── api/          llamadas HTTP, sesión, errores, 202 y descargas
+        ├── rutas/        rutas y protección por rol
+        ├── componentes/  piezas reutilizables y pagos y soporte compartidos
+        └── paginas/      público, cliente, distribuidor, administrador y técnico
 ```
 
 ## Arquitectura
@@ -47,7 +49,13 @@ Son tres niveles (presentación, lógica y datos), y el backend se divide en cap
 - `dominio` guarda las reglas de negocio y no importa `api`, `servicios` ni `datos`, ni contiene SQL.
 - `datos` solo mueve filas entre la base y los servicios.
 
-El detalle por archivo y las decisiones de implementación están en [`IA/mapa-de-archivos.md`](IA/mapa-de-archivos.md).
+En el frontend:
+
+- Pagos y soporte viven en `componentes/titular/` y se montan bajo `/cliente` y `/distribuidor`.
+- La protección de rutas solo orienta; la seguridad está en el backend.
+- Una respuesta 202 se muestra como pendiente de reconciliación.
+- Los datos de tarjeta solo viven en memoria mientras se escribe el formulario.
+- Los `id` de migración se guardan en el navegador, porque la API no lista migraciones.
 
 ## Puesta en marcha
 
@@ -84,6 +92,23 @@ Requisitos: Docker con Compose y Node.js 22.
    ADMIN_ROL="Administrador de Personal" \
    npm run crear-admin
    ```
+
+5. En otra terminal, instala y arranca el frontend. Queda en `http://localhost:5173` y reenvía `/api` al backend en `http://localhost:3000`; el backend no tiene CORS, así que el frontend siempre se abre por Vite.
+
+   ```sh
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+## Scripts del frontend
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Arranca el frontend con el proxy de `/api` |
+| `npm run build` | Genera la versión de producción en `frontend/dist/` |
+| `npm run preview` | Sirve `dist/` con el mismo proxy |
+| `npm run lint` | Revisa el código con ESLint |
 
 ## Scripts del backend
 
