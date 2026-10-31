@@ -124,6 +124,42 @@ test('UC6 E5: con la base caída el alta se cifra y luego se reconcilia', async 
 	assert.equal(sesion.estado, 200);
 });
 
+test('UC1 E2: con la base caída el registro se cifra y al reconciliar conserva la recuperación', async () => {
+	const correo = `${randomUUID()}@prueba.com`;
+	correos.push(correo);
+	const datos = {
+		correo,
+		contraseña: CLAVE,
+		preguntaSeguridad: '¿Mascota?',
+		respuestaSeguridad: 'Luna',
+		nombreCompleto: 'Registro Contingencia',
+		tipoDocumento: 'CC',
+		numeroDocumento: randomUUID().slice(0, 30),
+		teléfono: '3001234567',
+		fechaNacimiento: '1990-05-20',
+		paqueteHosting: 'Chibcha-Plata',
+		planDePago: 'Mensual',
+	};
+	const caida = simularCaida();
+	const { estado, cuerpo } = await pedir('POST', '/usuarios/registro', datos);
+	caida.mock.restore();
+
+	assert.equal(estado, 202);
+	assert.equal(cuerpo.pendienteDeReconciliacion, true);
+	assert.equal(await existe(correo), false);
+	assert.equal((await readFile(process.env.RUTA_RESPALDO, 'utf8')).includes(correo), false);
+
+	assert.deepEqual(await reconciliar(aplicadoresDeRespaldo), { aplicados: 1, pendientes: 0 });
+	assert.equal((await pedir('POST', '/usuarios/sesion', { correo, contraseña: CLAVE })).estado, 200);
+	const pregunta = await pedir('POST', '/usuarios/recuperacion/pregunta', { correo });
+	assert.equal(pregunta.cuerpo.pregunta, datos.preguntaSeguridad);
+	const { rows } = await pool.query(
+		'SELECT m."id" FROM medio_de_pago m JOIN usuario u ON u."id" = m."titularId" WHERE u."correo" = $1',
+		[correo],
+	);
+	assert.equal(rows.length, 0);
+});
+
 async function conCaida(metodo, ruta, cuerpo) {
 	const caida = simularCaida();
 	const respuesta = await pedir(metodo, ruta, cuerpo);

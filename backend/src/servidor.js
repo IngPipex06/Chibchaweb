@@ -14,7 +14,8 @@ app.listen(entorno.puerto, () => {
 	console.log(`API de ChibchaWeb en el puerto ${entorno.puerto}`);
 });
 
-// UC25: el temporizador no es del dominio; desde fuera revisa los tickets cada minuto.
+// UC25 y RT4: el temporizador no es del dominio; desde fuera revisa los tickets y el algoritmo de respaldo cada minuto.
 setInterval(() => {
 	escalarTicketsVencidos().catch((error) => console.error('No se pudieron escalar los tickets vencidos', error));
+	cargarAlgoritmoVigente().catch((error) => console.error('No se pudo releer el algoritmo de respaldo', error));
 }, PERIODO_DEL_TEMPORIZADOR);

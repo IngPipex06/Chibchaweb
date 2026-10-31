@@ -48,6 +48,18 @@ rutasDeClientes.post('/:id/reactivar', async (req, res) => {
 	res.status(204).end();
 });
 
+const rutasDeDistribuidores = crearRutasDeGestion(distribuidores, 'GestionarPerfilDeDistribuidores');
+rutasDeDistribuidores.get('/:id/dominios', async (req, res) => {
+	res.json(await distribuidores.listarDominios(req.params.id));
+});
+rutasDeDistribuidores.post('/:id/dominios', async (req, res) => {
+	res.status(201).json(await distribuidores.asignarDominio(req.params.id, req.body ?? {}));
+});
+rutasDeDistribuidores.delete('/:id/dominios/:nombre', async (req, res) => {
+	await distribuidores.quitarDominio(req.params.id, req.params.nombre);
+	res.status(204).end();
+});
+
 rutasDePerfiles.use('/clientes', rutasDeClientes);
 rutasDePerfiles.use('/personal', crearRutasDeGestion(personal, 'GestionarPerfilDePersonalInterno'));
-rutasDePerfiles.use('/distribuidores', crearRutasDeGestion(distribuidores, 'GestionarPerfilDeDistribuidores'));
+rutasDePerfiles.use('/distribuidores', rutasDeDistribuidores);

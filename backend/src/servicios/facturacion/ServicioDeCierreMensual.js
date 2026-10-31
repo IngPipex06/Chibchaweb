@@ -11,7 +11,8 @@ import { Comisión } from '../../dominio/facturacion/Comision.js';
 import { formatearFecha } from '../../dominio/facturacion/Factura.js';
 import { Distribuidor } from '../../dominio/usuarios/Distribuidor.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
-import { exigirPeríodo, FORMATO_UUID } from './ServicioDeFacturacion.js';
+import { FORMATO_UUID } from '../usuarios/validacion.js';
+import { exigirPeríodo } from './ServicioDeFacturacion.js';
 
 const VIOLACION_DE_UNICIDAD = '23505';
 

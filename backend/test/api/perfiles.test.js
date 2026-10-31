@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
 import { app } from '../../src/app.js';
 import { pool } from '../../src/config/baseDeDatos.js';
+import * as DominioGateway from '../../src/datos/gateways/DominioGateway.js';
 import { crearAdministrador } from '../../src/servicios/usuarios/ServicioDeUsuarios.js';
 
 const CLAVE = 'clave-segura';
@@ -71,6 +72,7 @@ before(async () => {
 after(async () => {
 	const { rows } = await pool.query('SELECT "id" FROM usuario WHERE "correo" = ANY($1)', [correos]);
 	const ids = rows.map((fila) => fila.id);
+	await pool.query('DELETE FROM dominio WHERE "clienteId" = ANY($1)', [ids]);
 	for (const tabla of ['cliente', 'distribuidor', 'administrador', 'tecnico_de_soporte', 'empleado', 'usuario']) {
 		await pool.query(`DELETE FROM ${tabla} WHERE "id" = ANY($1)`, [ids]);
 	}
@@ -272,6 +274,37 @@ test('UC2 E2: ofrece recuperar en cada fallo y marca el límite, sin bloquear ni
 
 	assert.ok(await iniciarSesion(datos.correo));
 	assert.equal((await fallar(datos.correo)).cuerpo.limiteDeIntentosAlcanzado, false);
+});
+
+function nuevoDistribuidor() {
+	return { correo: correoNuevo(), contraseña: CLAVE, razónSocial: `Canal ${unico()}`, nit: unico() };
+}
+
+test('UC10: asigna y quita dominios, y el vínculo llega a los conteos de la facturación', async () => {
+	const { cuerpo: cliente } = await pedir('POST', '/perfiles/clientes', sesiones.clientes, nuevoCliente());
+	const nombre = `${randomUUID()}.com`;
+	await pool.query('INSERT INTO dominio ("nombre", "clienteId") VALUES ($1, $2)', [nombre, cliente.id]);
+	const { cuerpo: canal } = await pedir('POST', '/perfiles/distribuidores', sesiones.canales, nuevoDistribuidor());
+	const { cuerpo: otro } = await pedir('POST', '/perfiles/distribuidores', sesiones.canales, nuevoDistribuidor());
+	const ruta = `/perfiles/distribuidores/${canal.id}/dominios`;
+
+	assert.equal((await pedir('POST', ruta, sesiones.clientes, { nombre })).estado, 403);
+	const asignado = await pedir('POST', ruta, sesiones.canales, { nombre });
+	assert.equal(asignado.estado, 201);
+	assert.deepEqual((await pedir('GET', ruta, sesiones.canales)).cuerpo, [asignado.cuerpo]);
+	assert.equal(await DominioGateway.contarPorDistribuidor(canal.id), 1);
+	assert.equal(await DominioGateway.contarPorCliente(cliente.id), 1);
+
+	const ajeno = await pedir('POST', `/perfiles/distribuidores/${otro.id}/dominios`, sesiones.canales, { nombre });
+	assert.equal(ajeno.estado, 409);
+	assert.equal((await pedir('POST', ruta, sesiones.canales, { nombre: 'no-existe.com' })).estado, 404);
+	assert.equal((await pedir('POST', ruta, sesiones.canales, {})).estado, 400);
+	const sinVinculo = `/perfiles/distribuidores/${otro.id}/dominios/${nombre}`;
+	assert.equal((await pedir('DELETE', sinVinculo, sesiones.canales)).estado, 404);
+
+	assert.equal((await pedir('DELETE', `${ruta}/${nombre}`, sesiones.canales)).estado, 204);
+	assert.equal(await DominioGateway.contarPorDistribuidor(canal.id), 0);
+	assert.equal((await pedir('GET', '/perfiles/distribuidores/no-es-uuid/dominios', sesiones.canales)).estado, 404);
 });
 
 test('UC10: asigna la comisión por categoría y no deja editarla', async () => {

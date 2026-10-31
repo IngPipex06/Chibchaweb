@@ -139,6 +139,8 @@ test('UC20: sin dirección el XML la omite', async () => {
 		nombreCompleto: 'Sin Dirección',
 		tipoDocumento: 'CC',
 		numeroDocumento: unico(),
+		teléfono: '3001234567',
+		fechaNacimiento: '1990-05-20',
 		paqueteHosting: 'Chibcha-Plata',
 		planDePago: 'Mensual',
 	});

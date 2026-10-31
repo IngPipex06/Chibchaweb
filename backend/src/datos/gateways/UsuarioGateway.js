@@ -17,11 +17,16 @@ export async function bloquear(id, conexion) {
 
 export async function insertar(fila, conexion = pool) {
 	const { rows } = await conexion.query(
-		`INSERT INTO usuario ("correo", "contraseña", "preguntaSeguridad", "respuestaSeguridad")
-		VALUES ($1, $2, $3, $4) RETURNING "id"`,
-		[fila.correo, fila.contraseña, fila.preguntaSeguridad ?? null, fila.respuestaSeguridad ?? null],
+		`INSERT INTO usuario ("correo", "contraseña", "preguntaSeguridad", "respuestaSeguridad", "estado")
+		VALUES ($1, $2, $3, $4, COALESCE($5::estado_usuario, 'Activo')) RETURNING "id"`,
+		[fila.correo, fila.contraseña, fila.preguntaSeguridad ?? null, fila.respuestaSeguridad ?? null, fila.estado ?? null],
 	);
 	return rows[0].id;
+}
+
+export async function listarCorreosRegistrados(correos) {
+	const { rows } = await pool.query('SELECT "correo" FROM usuario WHERE "correo" = ANY($1)', [correos]);
+	return rows.map((fila) => fila.correo);
 }
 
 export async function actualizarCorreo(id, correo, conexion = pool) {

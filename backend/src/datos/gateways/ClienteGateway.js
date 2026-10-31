@@ -10,6 +10,14 @@ export async function buscarPorNumeroDocumento(numeroDocumento) {
 	return rows[0] ?? null;
 }
 
+export async function listarPorDocumentos(numeros) {
+	const { rows } = await pool.query(
+		'SELECT "numeroDocumento", "tipoDocumento" FROM cliente WHERE "numeroDocumento" = ANY($1)',
+		[numeros],
+	);
+	return rows;
+}
+
 export async function insertar(fila, conexion = pool) {
 	await conexion.query(
 		`INSERT INTO cliente ("id", "nombreCompleto", "tipoDocumento", "numeroDocumento", "teléfono",

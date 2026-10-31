@@ -15,7 +15,10 @@ FROM (VALUES
 	('Administrador de Canales', 'GenerarFactura', 'UC11: emisión de la factura de un titular'),
 	('Administrador de Clientes', 'EjecutarCierreMensual', 'UC12: cierre mensual de distribuidores'),
 	('Administrador de Personal', 'EjecutarCierreMensual', 'UC12: cierre mensual de distribuidores'),
-	('Administrador de Canales', 'EjecutarCierreMensual', 'UC12: cierre mensual de distribuidores')
+	('Administrador de Canales', 'EjecutarCierreMensual', 'UC12: cierre mensual de distribuidores'),
+	('Administrador de Clientes', 'MigrarDatosLegados', 'UC26: migración de datos del sistema legado'),
+	('Administrador de Personal', 'MigrarDatosLegados', 'UC26: migración de datos del sistema legado'),
+	('Administrador de Canales', 'MigrarDatosLegados', 'UC26: migración de datos del sistema legado')
 ) AS p ("rol", "nombre", "descripcion")
 JOIN rol r ON r."nombre" = p."rol";
 

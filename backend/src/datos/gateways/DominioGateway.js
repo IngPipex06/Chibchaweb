@@ -8,6 +8,31 @@ export async function insertar(fila, conexion = pool) {
 	return rows[0].id;
 }
 
+export async function buscarPorNombre(nombre) {
+	const { rows } = await pool.query('SELECT "id", "nombre" FROM dominio WHERE "nombre" = $1', [nombre]);
+	return rows[0] ?? null;
+}
+
+export async function asignarDistribuidor(id, distribuidorId) {
+	const { rowCount } = await pool.query(
+		'UPDATE dominio SET "distribuidorId" = $2 WHERE "id" = $1 AND "distribuidorId" IS NULL',
+		[id, distribuidorId],
+	);
+	return rowCount > 0;
+}
+
+export async function quitarDistribuidor(nombre, distribuidorId) {
+	await pool.query('UPDATE dominio SET "distribuidorId" = NULL WHERE "nombre" = $1 AND "distribuidorId" = $2', [
+		nombre,
+		distribuidorId,
+	]);
+}
+
+export async function listarNombresRegistrados(nombres) {
+	const { rows } = await pool.query('SELECT "nombre" FROM dominio WHERE "nombre" = ANY($1)', [nombres]);
+	return rows.map((fila) => fila.nombre);
+}
+
 export async function listarPorTitular(titularId) {
 	const { rows } = await pool.query(
 		'SELECT "id", "nombre" FROM dominio WHERE "clienteId" = $1 OR "distribuidorId" = $1 ORDER BY "nombre"',

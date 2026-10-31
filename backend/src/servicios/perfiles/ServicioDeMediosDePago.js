@@ -1,15 +1,6 @@
-import { TarjetaDiners } from '../../dominio/perfiles/TarjetaDiners.js';
-import { TarjetaMastercard } from '../../dominio/perfiles/TarjetaMastercard.js';
-import { TarjetaVisa } from '../../dominio/perfiles/TarjetaVisa.js';
+import { FRANQUICIAS } from '../../dominio/perfiles/Franquicias.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
 import { exigirTexto, fechaOpcional } from '../usuarios/validacion.js';
-
-// Factory simple de la jerarquía de tarjetas (Sección 5 del documento).
-const FRANQUICIAS = Object.freeze({
-	Visa: TarjetaVisa,
-	Mastercard: TarjetaMastercard,
-	Diners: TarjetaDiners,
-});
 
 /** Reconstruye la tarjeta de una fila; sin el número completo, que no se guarda. */
 export function crearTarjeta(fila) {

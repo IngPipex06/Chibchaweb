@@ -22,6 +22,8 @@ function nuevoRegistro(cambios = {}) {
 		nombreCompleto: 'Persona de Prueba',
 		tipoDocumento: 'CC',
 		numeroDocumento: unico.slice(0, 30),
+		teléfono: '3001234567',
+		fechaNacimiento: '1990-05-20',
 		paqueteHosting: 'Chibcha-Plata',
 		planDePago: 'Mensual',
 		...cambios,
@@ -91,6 +93,8 @@ test('UC1: señala el campo inválido', async () => {
 		[{ paqueteHosting: 'Gratis' }, 'paqueteHosting'],
 		[{ planDePago: undefined }, 'planDePago'],
 		[{ fechaNacimiento: '2023-02-30' }, 'fechaNacimiento'],
+		[{ fechaNacimiento: undefined }, 'fechaNacimiento'],
+		[{ teléfono: undefined }, 'teléfono'],
 		[{ teléfono: '1'.repeat(31) }, 'teléfono'],
 	];
 	for (const [cambios, campo] of casos) {
@@ -152,10 +156,11 @@ test('UC2: carga el rol y los permisos del administrador', async () => {
 	assert.equal(estado, 200);
 	assert.equal(cuerpo.perfil.tipo, 'Administrador');
 	assert.equal(cuerpo.perfil.rol, 'Administrador de Personal');
-	assert.deepEqual(cuerpo.perfil.permisos, [
+	assert.deepEqual([...cuerpo.perfil.permisos].sort(), [
 		'EjecutarCierreMensual',
 		'GenerarFactura',
 		'GestionarPerfilDePersonalInterno',
+		'MigrarDatosLegados',
 	]);
 });
 

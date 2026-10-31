@@ -6,7 +6,8 @@ import { exigirSesion } from '../middleware/autenticacion.js';
 export const rutasDeUsuarios = Router();
 
 rutasDeUsuarios.post('/registro', async (req, res) => {
-	res.status(201).json(await ServicioDeUsuarios.registrarCliente(req.body ?? {}));
+	const resultado = await ServicioDeUsuarios.registrarCliente(req.body ?? {});
+	res.status(resultado.pendienteDeReconciliacion ? 202 : 201).json(resultado);
 });
 
 rutasDeUsuarios.post('/sesion', async (req, res) => {

@@ -13,4 +13,16 @@ export class EntradaDeInconsistencia {
 		this.#motivo = datos.motivo ?? null;
 		this.#registroOriginal = datos.registroOriginal ?? null;
 	}
+
+	get fecha() {
+		return this.#fecha;
+	}
+
+	get motivo() {
+		return this.#motivo;
+	}
+
+	get registroOriginal() {
+		return this.#registroOriginal;
+	}
 }

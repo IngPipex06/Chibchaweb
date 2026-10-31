@@ -3,6 +3,7 @@ import { generarHash } from '../../config/hash.js';
 import * as AdministradorGateway from '../../datos/gateways/AdministradorGateway.js';
 import * as ClienteGateway from '../../datos/gateways/ClienteGateway.js';
 import * as DistribuidorGateway from '../../datos/gateways/DistribuidorGateway.js';
+import * as DominioGateway from '../../datos/gateways/DominioGateway.js';
 import * as EmpleadoGateway from '../../datos/gateways/EmpleadoGateway.js';
 import * as MedioDePagoGateway from '../../datos/gateways/MedioDePagoGateway.js';
 import * as RolGateway from '../../datos/gateways/RolGateway.js';
@@ -12,11 +13,12 @@ import { OrigenRespaldo } from '../../dominio/respaldo/OrigenRespaldo.js';
 import { Dirección } from '../../dominio/perfiles/Direccion.js';
 import { PaqueteDeHosting } from '../../dominio/perfiles/PaqueteDeHosting.js';
 import { PlanDePago } from '../../dominio/perfiles/PlanDePago.js';
+import { Dominio } from '../../dominio/solicitudes/Dominio.js';
 import { NivelDeServicio } from '../../dominio/soporte/NivelDeServicio.js';
 import { CategoríaDistribuidor } from '../../dominio/usuarios/CategoriaDistribuidor.js';
 import { COMISIÓN_POR_CATEGORÍA } from '../../dominio/usuarios/Distribuidor.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
-import { cargarUsuario, traducirDuplicado } from '../usuarios/ServicioDeUsuarios.js';
+import { cargarUsuario, guardarRegistroDeCliente, traducirDuplicado } from '../usuarios/ServicioDeUsuarios.js';
 import {
 	exigirContraseñaNueva,
 	exigirCorreo,
@@ -25,7 +27,7 @@ import {
 	fechaOpcional,
 	textoOpcional,
 } from '../usuarios/validacion.js';
-import { respaldarEnArchivo } from '../respaldo/ServicioDeContingencia.js';
+import { DATOS_PENDIENTES, respaldarEnArchivo } from '../respaldo/ServicioDeContingencia.js';
 import { validarTarjeta } from './ServicioDeMediosDePago.js';
 
 /** UC5: filtro por rol de la fachada. */
@@ -34,8 +36,6 @@ const GESTIONES = Object.freeze({
 	GestionarPerfilDePersonalInterno: 'personal',
 	GestionarPerfilDeDistribuidores: 'distribuidores',
 });
-
-const DATOS_PENDIENTES = 'La base de datos no está disponible: los datos quedan pendientes de reconciliación';
 
 export function listarGestiones(permisos) {
 	return permisos.filter((permiso) => Object.hasOwn(GESTIONES, permiso)).map((permiso) => GESTIONES[permiso]);
@@ -206,6 +206,15 @@ async function guardarEdicionDeDistribuidor({ id, fila }) {
 	return id;
 }
 
+async function cargarDistribuidorConDominios(id) {
+	exigirFicha(await DistribuidorGateway.obtenerFicha(id));
+	const distribuidor = await cargarUsuario(await UsuarioGateway.buscarPorId(id));
+	const filas = await DominioGateway.listarPorTitular(id);
+	const dominios = new Map(filas.map((fila) => [fila.nombre, new Dominio(fila)]));
+	for (const dominio of dominios.values()) distribuidor.agregarDominioGestionado(dominio);
+	return { distribuidor, dominios };
+}
+
 export const distribuidores = {
 	listar: (busqueda) => DistribuidorGateway.listar(busqueda),
 
@@ -245,6 +254,31 @@ export const distribuidores = {
 	async inhabilitar(id) {
 		await this.obtener(id);
 		await cambiarEstado(id, (usuario) => usuario.inhabilitar());
+	},
+
+	async listarDominios(id) {
+		exigirFicha(await DistribuidorGateway.obtenerFicha(id));
+		return DominioGateway.listarPorTitular(id);
+	},
+
+	/** Multiplicidad 0..1: un dominio de otro distribuidor hay que quitarlo antes. */
+	async asignarDominio(id, datos) {
+		const { distribuidor } = await cargarDistribuidorConDominios(id);
+		const fila = await DominioGateway.buscarPorNombre(exigirTexto(datos.nombre, 'nombre'));
+		if (!fila) throw new ErrorDeServicio(404, 'El dominio no existe');
+		distribuidor.agregarDominioGestionado(new Dominio(fila));
+		if (!(await DominioGateway.asignarDistribuidor(fila.id, id))) {
+			throw new ErrorDeServicio(409, 'El dominio ya está asignado a un distribuidor', 'nombre');
+		}
+		return { id: fila.id, nombre: fila.nombre };
+	},
+
+	async quitarDominio(id, nombre) {
+		const { distribuidor, dominios } = await cargarDistribuidorConDominios(id);
+		const dominio = dominios.get(nombre);
+		if (!dominio) throw new ErrorDeServicio(404, 'El dominio no existe');
+		distribuidor.quitarDominioGestionado(dominio);
+		await DominioGateway.quitarDistribuidor(nombre, id);
 	},
 };
 
@@ -346,7 +380,10 @@ export const personal = {
 
 /** RT4: las altas no traen id porque aún no existen. */
 export const aplicadoresDeRespaldo = Object.freeze({
-	[OrigenRespaldo.PerfilCliente]: (datos) => (datos.id ? guardarEdicionDeCliente(datos) : guardarAltaDeCliente(datos)),
+	[OrigenRespaldo.PerfilCliente]: (datos) => {
+		if (datos.id) return guardarEdicionDeCliente(datos);
+		return datos.cuenta ? guardarRegistroDeCliente(datos) : guardarAltaDeCliente(datos);
+	},
 	[OrigenRespaldo.PerfilDistribuidor]: (datos) =>
 		datos.id ? guardarEdicionDeDistribuidor(datos) : guardarAltaDeDistribuidor(datos),
 	[OrigenRespaldo.PerfilPersonal]: (datos) => (datos.id ? guardarEdicionDePersonal(datos) : guardarAltaDePersonal(datos)),

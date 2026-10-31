@@ -6,10 +6,9 @@ import { Prioridad } from '../../dominio/soporte/Prioridad.js';
 import { Ticket } from '../../dominio/soporte/Ticket.js';
 import { TécnicoDeSoporte } from '../../dominio/usuarios/TecnicoDeSoporte.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
-import { exigirOpcion, exigirTexto } from '../usuarios/validacion.js';
+import { exigirOpcion, exigirTexto, FORMATO_UUID } from '../usuarios/validacion.js';
 import { crearEstado, textoDeEstado } from './FabricaDeEstadoTicket.js';
 
-const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LARGO_DE_TEXTO = 500;
 const ESTADOS_DE_COLA = Object.freeze({
 	Abierto: 'Abierto',

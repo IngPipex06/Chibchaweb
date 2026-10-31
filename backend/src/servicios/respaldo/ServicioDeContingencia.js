@@ -16,10 +16,12 @@ const ALGORITMOS = Object.freeze({
 	TripleDES: AlgoritmoDeCifradoTripleDES,
 });
 
+export const DATOS_PENDIENTES = 'La base de datos no está disponible: los datos quedan pendientes de reconciliación';
+
 // El respaldo actúa con la base caída, cuando la tabla ya no se puede leer: se conserva en memoria.
 let algoritmoVigente = 'AES256';
 
-/** Se llama al arrancar. Si la base no responde, sigue el valor por defecto del dominio. */
+/** Se llama al arrancar y cada minuto (RT4, tiempo de ejecución). Si la base no responde, sigue el valor en memoria. */
 export async function cargarAlgoritmoVigente() {
 	try {
 		algoritmoVigente = (await ConfiguracionCifradoGateway.obtenerAlgoritmoActivo()) ?? algoritmoVigente;

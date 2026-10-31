@@ -1,4 +1,4 @@
-import { enTransaccion } from '../../config/baseDeDatos.js';
+import { enTransaccion, esCaidaDeBase } from '../../config/baseDeDatos.js';
 import { generarHash } from '../../config/hash.js';
 import * as AdministradorGateway from '../../datos/gateways/AdministradorGateway.js';
 import * as ClienteGateway from '../../datos/gateways/ClienteGateway.js';
@@ -11,6 +11,7 @@ import * as UsuarioGateway from '../../datos/gateways/UsuarioGateway.js';
 import { Dirección } from '../../dominio/perfiles/Direccion.js';
 import { PaqueteDeHosting } from '../../dominio/perfiles/PaqueteDeHosting.js';
 import { PlanDePago } from '../../dominio/perfiles/PlanDePago.js';
+import { OrigenRespaldo } from '../../dominio/respaldo/OrigenRespaldo.js';
 import { Administrador } from '../../dominio/usuarios/Administrador.js';
 import { Cliente } from '../../dominio/usuarios/Cliente.js';
 import { Distribuidor } from '../../dominio/usuarios/Distribuidor.js';
@@ -19,6 +20,7 @@ import { PreguntaDeSeguridad } from '../../dominio/usuarios/PreguntaDeSeguridad.
 import { Rol } from '../../dominio/usuarios/Rol.js';
 import { TécnicoDeSoporte } from '../../dominio/usuarios/TecnicoDeSoporte.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
+import { DATOS_PENDIENTES, respaldarEnArchivo } from '../respaldo/ServicioDeContingencia.js';
 import {
 	exigirContraseñaNueva,
 	exigirCorreo,
@@ -26,7 +28,6 @@ import {
 	exigirTexto,
 	exigirValorHasheable,
 	fechaOpcional,
-	textoOpcional,
 } from './validacion.js';
 
 const VIOLACION_UNIQUE = '23505';
@@ -40,11 +41,6 @@ async function cargarRol(rolId) {
 	});
 }
 
-/**
- * Arma la subclase concreta de Usuario a partir de su fila. La herencia está
- * repartida en tablas (Class Table Inheritance): la clase sale de la tabla que
- * tenga una fila con ese id.
- */
 function cargarDirección(fila) {
 	if (!fila.direccionCalle) return null;
 	return new Dirección({
@@ -55,6 +51,11 @@ function cargarDirección(fila) {
 	});
 }
 
+/**
+ * Arma la subclase concreta de Usuario a partir de su fila. La herencia está
+ * repartida en tablas (Class Table Inheritance): la clase sale de la tabla que
+ * tenga una fila con ese id.
+ */
 export async function cargarUsuario(fila) {
 	const base = {
 		id: fila.id,
@@ -111,7 +112,16 @@ export function traducirDuplicado(error, campos) {
 	return new ErrorDeServicio(409, 'El valor ya está registrado', campo);
 }
 
-/** UC1: es el único autorregistro del sistema y siempre crea un Cliente. */
+/** UC1. Lo recibe también `aplicadoresDeRespaldo`: `cuenta` lo distingue del alta de UC6. */
+export function guardarRegistroDeCliente({ fila, cuenta }) {
+	return enTransaccion(async (conexion) => {
+		const id = await UsuarioGateway.insertar(cuenta, conexion);
+		await ClienteGateway.insertar({ ...fila, id }, conexion);
+		return id;
+	});
+}
+
+/** UC1: es el único autorregistro del sistema y siempre crea un Cliente. E2: con la base caída se respalda. */
 export async function registrarCliente(datos) {
 	const correo = exigirCorreo(datos.correo);
 	const contraseña = exigirContraseñaNueva(datos.contraseña);
@@ -121,27 +131,30 @@ export async function registrarCliente(datos) {
 		nombreCompleto: exigirTexto(datos.nombreCompleto, 'nombreCompleto'),
 		tipoDocumento: exigirTexto(datos.tipoDocumento, 'tipoDocumento', 50),
 		numeroDocumento: exigirTexto(datos.numeroDocumento, 'numeroDocumento', 50),
-		teléfono: textoOpcional(datos.teléfono, 'teléfono', 30),
-		fechaNacimiento: fechaOpcional(datos.fechaNacimiento, 'fechaNacimiento'),
+		teléfono: exigirTexto(datos.teléfono, 'teléfono', 30),
+		fechaNacimiento: fechaOpcional(exigirTexto(datos.fechaNacimiento, 'fechaNacimiento', 10), 'fechaNacimiento'),
 		paqueteHosting: exigirOpcion(datos.paqueteHosting, PaqueteDeHosting, 'paqueteHosting'),
 		planDePago: exigirOpcion(datos.planDePago, PlanDePago, 'planDePago'),
 	};
 
-	const contraseñaHash = await generarHash(contraseña);
-	const respuestaHash = await generarHash(respuesta);
+	const registro = {
+		fila,
+		cuenta: {
+			correo,
+			contraseña: await generarHash(contraseña),
+			preguntaSeguridad: pregunta,
+			respuestaSeguridad: await generarHash(respuesta),
+		},
+	};
+	let id;
 	try {
-		const id = await enTransaccion(async (conexion) => {
-			const nuevoId = await UsuarioGateway.insertar(
-				{ correo, contraseña: contraseñaHash, preguntaSeguridad: pregunta, respuestaSeguridad: respuestaHash },
-				conexion,
-			);
-			await ClienteGateway.insertar({ ...fila, id: nuevoId }, conexion);
-			return nuevoId;
-		});
-		return describirPerfil(await cargarUsuario(await UsuarioGateway.buscarPorId(id)));
+		id = await guardarRegistroDeCliente(registro);
 	} catch (error) {
-		throw traducirDuplicado(error, ['correo', 'numeroDocumento']);
+		if (!esCaidaDeBase(error)) throw traducirDuplicado(error, ['correo', 'numeroDocumento']);
+		await respaldarEnArchivo(registro, OrigenRespaldo.PerfilCliente);
+		return { pendienteDeReconciliacion: true, mensaje: DATOS_PENDIENTES };
 	}
+	return describirPerfil(await cargarUsuario(await UsuarioGateway.buscarPorId(id)));
 }
 
 /** El primer administrador no puede salir de UC9, que ya exige un administrador. */

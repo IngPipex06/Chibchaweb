@@ -5,8 +5,8 @@ import * as DominioGateway from '../../datos/gateways/DominioGateway.js';
 import * as FacturaGateway from '../../datos/gateways/FacturaGateway.js';
 import { Factura } from '../../dominio/facturacion/Factura.js';
 import { ErrorDeServicio } from '../ErrorDeServicio.js';
+import { FORMATO_UUID } from '../usuarios/validacion.js';
 
-export const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FORMATO_PERIODO = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export function exigirPeríodo(valor) {

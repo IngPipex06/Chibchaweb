@@ -5,6 +5,8 @@ const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAXIMO_BYTES_HASH = 72;
 const MINIMO_CONTRASEÑA = 8;
 
+export const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function exigirTexto(valor, campo, maximo = 255) {
 	if (typeof valor !== 'string' || valor.trim() === '') {
 		throw new ErrorDeServicio(400, 'El campo es obligatorio', campo);
