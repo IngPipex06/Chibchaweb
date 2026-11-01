@@ -293,6 +293,9 @@ test('UC10: asigna y quita dominios, y el vínculo llega a los conteos de la fac
 	assert.equal(asignado.estado, 201);
 	assert.deepEqual((await pedir('GET', ruta, sesiones.canales)).cuerpo, [asignado.cuerpo]);
 	assert.equal(await DominioGateway.contarPorDistribuidor(canal.id), 1);
+	const fechas = async () =>
+		(await pool.query('SELECT "fechaAsignación" FROM dominio WHERE "nombre" = $1', [nombre])).rows[0].fechaAsignación;
+	assert.notEqual(await fechas(), null);
 	assert.equal(await DominioGateway.contarPorCliente(cliente.id), 1);
 
 	const ajeno = await pedir('POST', `/perfiles/distribuidores/${otro.id}/dominios`, sesiones.canales, { nombre });
@@ -304,7 +307,21 @@ test('UC10: asigna y quita dominios, y el vínculo llega a los conteos de la fac
 
 	assert.equal((await pedir('DELETE', `${ruta}/${nombre}`, sesiones.canales)).estado, 204);
 	assert.equal(await DominioGateway.contarPorDistribuidor(canal.id), 0);
+	assert.equal(await fechas(), null);
 	assert.equal((await pedir('GET', '/perfiles/distribuidores/no-es-uuid/dominios', sesiones.canales)).estado, 404);
+});
+
+test('UC10: asigna el dominio sin importar mayúsculas', async () => {
+	const { cuerpo: cliente } = await pedir('POST', '/perfiles/clientes', sesiones.clientes, nuevoCliente());
+	const nombre = `${randomUUID()}.com`;
+	await pool.query('INSERT INTO dominio ("nombre", "clienteId") VALUES ($1, $2)', [nombre, cliente.id]);
+	const { cuerpo: canal } = await pedir('POST', '/perfiles/distribuidores', sesiones.canales, nuevoDistribuidor());
+
+	const asignado = await pedir('POST', `/perfiles/distribuidores/${canal.id}/dominios`, sesiones.canales, {
+		nombre: nombre.toUpperCase(),
+	});
+	assert.equal(asignado.estado, 201);
+	assert.equal(asignado.cuerpo.nombre, nombre);
 });
 
 test('UC10: asigna la comisión por categoría y no deja editarla', async () => {

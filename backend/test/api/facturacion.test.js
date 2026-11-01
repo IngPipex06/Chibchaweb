@@ -61,12 +61,12 @@ async function crearCliente(tokenClientes, paqueteHosting, planDePago) {
 	return cuerpo.id;
 }
 
-async function crearDominio(clienteId, distribuidorId = null) {
-	await pool.query('INSERT INTO dominio ("nombre", "clienteId", "distribuidorId") VALUES ($1, $2, $3)', [
-		`${randomUUID()}.com`,
-		clienteId,
-		distribuidorId,
-	]);
+async function crearDominio(clienteId, distribuidorId = null, fecha = '2026-01-15') {
+	await pool.query(
+		`INSERT INTO dominio ("nombre", "clienteId", "distribuidorId", "fechaRegistro", "fechaAsignación")
+		VALUES ($1, $2, $3, $4, $5)`,
+		[`${randomUUID()}.com`, clienteId, distribuidorId, fecha, distribuidorId ? fecha : null],
+	);
 }
 
 before(async () => {
@@ -131,6 +131,49 @@ test('UC11: al distribuidor se le cobran sus dominios gestionados', async () => 
 	assert.deepEqual(cuerpo.cargos, { hosting: 0, dominios: 15000, servicios: 0 });
 });
 
+test('UC11: solo cobra los dominios que existían al terminar el periodo', async () => {
+	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
+	await crearDominio(clienteId, null, '2026-09-30');
+	await crearDominio(clienteId, null, '2026-10-01');
+
+	const { cuerpo } = await pedir('POST', '/facturacion/facturas', tokenAdministrador, {
+		titularId: clienteId,
+		período: '2026-09',
+	});
+	assert.equal(cuerpo.cargos.dominios, 15000);
+});
+
+test('UC11: al distribuidor solo se le cobra lo asignado al terminar el periodo', async () => {
+	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
+	const { cuerpo: distribuidor } = await pedir('POST', '/perfiles/distribuidores', tokenDistribuidor, {
+		correo: correoNuevo(),
+		contraseña: CLAVE,
+		razónSocial: 'Distribuidora del Periodo',
+		nit: unico(),
+		tarjeta: TARJETA,
+	});
+	ids.push(distribuidor.id);
+	await crearDominio(clienteId, distribuidor.id, '2026-09-30');
+	await crearDominio(clienteId, distribuidor.id, '2026-10-01');
+
+	const { cuerpo } = await pedir('POST', '/facturacion/facturas', tokenAdministrador, {
+		titularId: distribuidor.id,
+		período: '2026-09',
+	});
+	assert.equal(cuerpo.cargos.dominios, 15000);
+});
+
+test('UC11: dos emisiones simultáneas dejan una sola factura', async () => {
+	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
+	const datos = { titularId: clienteId, período: '2026-09' };
+	const respuestas = await Promise.all([
+		pedir('POST', '/facturacion/facturas', tokenAdministrador, datos),
+		pedir('POST', '/facturacion/facturas', tokenAdministrador, datos),
+	]);
+	assert.deepEqual(respuestas.map((r) => r.estado).sort(), [201, 409]);
+	assert.equal(respuestas.find((r) => r.estado === 409).cuerpo.campo, 'período');
+});
+
 test('UC11: rechaza periodo inválido y titular inexistente', async () => {
 	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
 	const malPeriodo = await pedir('POST', '/facturacion/facturas', tokenAdministrador, {
@@ -145,6 +188,43 @@ test('UC11: rechaza periodo inválido y titular inexistente', async () => {
 		período: '2026-09',
 	});
 	assert.equal(sinTitular.estado, 404);
+});
+
+test('UC11: no factura a un titular inhabilitado', async () => {
+	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
+	const { cuerpo: distribuidor } = await pedir('POST', '/perfiles/distribuidores', tokenDistribuidor, {
+		correo: correoNuevo(),
+		contraseña: CLAVE,
+		razónSocial: 'Distribuidora Inhabilitada',
+		nit: unico(),
+		tarjeta: TARJETA,
+	});
+	ids.push(distribuidor.id);
+	assert.equal((await pedir('POST', `/perfiles/clientes/${clienteId}/inhabilitar`, tokenAdministrador)).estado, 204);
+	assert.equal((await pedir('POST', `/perfiles/distribuidores/${distribuidor.id}/inhabilitar`, tokenDistribuidor)).estado, 204);
+
+	for (const titularId of [clienteId, distribuidor.id]) {
+		const { estado, cuerpo } = await pedir('POST', '/facturacion/facturas', tokenAdministrador, { titularId, período: '2026-09' });
+		assert.equal(estado, 409);
+		assert.equal(cuerpo.campo, 'titularId');
+	}
+
+	const { rows } = await pool.query('SELECT 1 FROM factura WHERE "usuarioPagadorId" = ANY($1)', [[clienteId, distribuidor.id]]);
+	assert.equal(rows.length, 0);
+});
+
+test('UC11: no repite la factura de un titular en el mismo periodo', async () => {
+	const clienteId = await crearCliente(tokenAdministrador, 'Chibcha-Plata', 'Mensual');
+	const emitir = (período) => pedir('POST', '/facturacion/facturas', tokenAdministrador, { titularId: clienteId, período });
+	assert.equal((await emitir('2026-09')).estado, 201);
+
+	const repetida = await emitir('2026-09');
+	assert.equal(repetida.estado, 409);
+	assert.equal(repetida.cuerpo.campo, 'período');
+	assert.equal((await emitir('2026-10')).estado, 201);
+
+	const { rows } = await pool.query('SELECT 1 FROM factura WHERE "usuarioPagadorId" = $1', [clienteId]);
+	assert.equal(rows.length, 2);
 });
 
 test('UC11: solo un administrador con el permiso puede emitir', async () => {

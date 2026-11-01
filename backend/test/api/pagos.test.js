@@ -94,7 +94,7 @@ async function crearDistribuidor() {
 async function crearFactura(pagadorId, fechaVencimiento = '2099-01-01') {
 	const { rows } = await pool.query(
 		`INSERT INTO factura ("usuarioPagadorId", "número", "fechaEmisión", "fechaVencimiento", "período", "monto")
-		VALUES ($1, $2, '2020-01-01', $3, '2020-01', 100) RETURNING "id"`,
+		VALUES ($1, $2, '2020-01-01', $3, left(gen_random_uuid()::text, 20), 100) RETURNING "id"`,
 		[pagadorId, unico(), fechaVencimiento],
 	);
 	return rows[0].id;

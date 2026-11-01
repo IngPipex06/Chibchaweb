@@ -40,7 +40,7 @@ export function validarValor(campo, valor) {
       if (!PERIODO.test(texto)) return 'Use el formato AAAA-MM.'
       break
     case 'dominio':
-      if (!DOMINIO.test(texto) || texto.length > 253) return 'Escriba el dominio en minúsculas, por ejemplo misitio.com.'
+      if (!DOMINIO.test(texto.toLowerCase()) || texto.length > 253) return 'Ingrese un dominio válido, por ejemplo misitio.com.'
       break
     case 'mayorDeEdad':
       if (!FECHA.test(texto)) return 'Use el formato AAAA-MM-DD.'

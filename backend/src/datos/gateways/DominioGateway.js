@@ -15,17 +15,17 @@ export async function buscarPorNombre(nombre) {
 
 export async function asignarDistribuidor(id, distribuidorId) {
 	const { rowCount } = await pool.query(
-		'UPDATE dominio SET "distribuidorId" = $2 WHERE "id" = $1 AND "distribuidorId" IS NULL',
+		'UPDATE dominio SET "distribuidorId" = $2, "fechaAsignación" = CURRENT_DATE WHERE "id" = $1 AND "distribuidorId" IS NULL',
 		[id, distribuidorId],
 	);
 	return rowCount > 0;
 }
 
 export async function quitarDistribuidor(nombre, distribuidorId) {
-	await pool.query('UPDATE dominio SET "distribuidorId" = NULL WHERE "nombre" = $1 AND "distribuidorId" = $2', [
-		nombre,
-		distribuidorId,
-	]);
+	await pool.query(
+		'UPDATE dominio SET "distribuidorId" = NULL, "fechaAsignación" = NULL WHERE "nombre" = $1 AND "distribuidorId" = $2',
+		[nombre, distribuidorId],
+	);
 }
 
 export async function listarNombresRegistrados(nombres) {
@@ -51,6 +51,26 @@ export async function pertenece(id, titularId) {
 
 export async function contarPorCliente(clienteId) {
 	const { rows } = await pool.query('SELECT COUNT(*)::int AS total FROM dominio WHERE "clienteId" = $1', [clienteId]);
+	return rows[0].total;
+}
+
+/** UC11: dominios del cliente registrados hasta el fin del periodo `AAAA-MM`. */
+export async function contarPorClienteAlPeríodo(clienteId, período) {
+	const { rows } = await pool.query(
+		`SELECT COUNT(*)::int AS total FROM dominio
+		WHERE "clienteId" = $1 AND "fechaRegistro" < to_date($2, 'YYYY-MM') + INTERVAL '1 month'`,
+		[clienteId, período],
+	);
+	return rows[0].total;
+}
+
+/** UC11: dominios asignados al distribuidor hasta el fin del periodo `AAAA-MM`. */
+export async function contarPorDistribuidorAlPeríodo(distribuidorId, período) {
+	const { rows } = await pool.query(
+		`SELECT COUNT(*)::int AS total FROM dominio
+		WHERE "distribuidorId" = $1 AND "fechaAsignación" < to_date($2, 'YYYY-MM') + INTERVAL '1 month'`,
+		[distribuidorId, período],
+	);
 	return rows[0].total;
 }
 

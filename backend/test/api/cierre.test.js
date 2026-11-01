@@ -78,7 +78,7 @@ async function crearCliente() {
 async function crearFactura(pagadorId, fechaEmisión, monto) {
 	await pool.query(
 		`INSERT INTO factura ("usuarioPagadorId", "número", "fechaEmisión", "fechaVencimiento", "período", "monto")
-		VALUES ($1, $2, $3, $3, '2000-01', $4)`,
+		VALUES ($1, $2, $3, $3, left(gen_random_uuid()::text, 20), $4)`,
 		[pagadorId, unico(), fechaEmisión, monto],
 	);
 }

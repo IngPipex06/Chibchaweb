@@ -264,7 +264,7 @@ export const distribuidores = {
 	/** Multiplicidad 0..1: un dominio de otro distribuidor hay que quitarlo antes. */
 	async asignarDominio(id, datos) {
 		const { distribuidor } = await cargarDistribuidorConDominios(id);
-		const fila = await DominioGateway.buscarPorNombre(exigirTexto(datos.nombre, 'nombre'));
+		const fila = await DominioGateway.buscarPorNombre(exigirTexto(datos.nombre, 'nombre').toLowerCase());
 		if (!fila) throw new ErrorDeServicio(404, 'El dominio no existe');
 		distribuidor.agregarDominioGestionado(new Dominio(fila));
 		if (!(await DominioGateway.asignarDistribuidor(fila.id, id))) {

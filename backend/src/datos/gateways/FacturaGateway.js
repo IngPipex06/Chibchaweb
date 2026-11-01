@@ -15,6 +15,14 @@ export async function insertar(fila, conexion = pool) {
 	return rows[0].id;
 }
 
+export async function existeDelPeríodo(pagadorId, período) {
+	const { rows } = await pool.query('SELECT 1 FROM factura WHERE "usuarioPagadorId" = $1 AND "período" = $2', [
+		pagadorId,
+		período,
+	]);
+	return rows.length > 0;
+}
+
 export async function listarPorCobrar() {
 	const { rows } = await pool.query(
 		`SELECT "id" FROM factura WHERE "estado" IN ('Pendiente', 'Vencida') ORDER BY "fechaEmisión", "id"`,

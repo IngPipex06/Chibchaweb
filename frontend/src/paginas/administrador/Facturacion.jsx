@@ -27,8 +27,8 @@ export default function Facturacion() {
   const [dialogo, setDialogo] = useState(null)
 
   const titulares = [
-    ...(clientes.datos ?? []).map((x) => ({ valor: String(x.id), id: x.id, etiqueta: `Cliente · ${x.nombreCompleto} (${x.correo})` })),
-    ...(distribuidores.datos ?? []).map((x) => ({ valor: String(x.id), id: x.id, etiqueta: `Distribuidor · ${x.razónSocial} (${x.correo})` })),
+    ...(clientes.datos ?? []).filter((x) => x.estado === 'Activo').map((x) => ({ valor: String(x.id), id: x.id, etiqueta: `Cliente · ${x.nombreCompleto} (${x.correo})` })),
+    ...(distribuidores.datos ?? []).filter((x) => x.estado === 'Activo').map((x) => ({ valor: String(x.id), id: x.id, etiqueta: `Distribuidor · ${x.razónSocial} (${x.correo})` })),
   ]
   const campos = [
     { nombre: 'titularId', etiqueta: 'Titular', tipo: 'seleccion', obligatorio: true, completo: true, marcador: 'Seleccione un titular', opciones: titulares },
