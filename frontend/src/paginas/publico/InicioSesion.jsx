@@ -63,6 +63,9 @@ export default function InicioSesion() {
         <Aviso tipo="critico" titulo="Formulario restringido" texto={`Se alcanzó el límite de intentos. Podrá intentar de nuevo en ${cuentaRegresiva(bloqueo.restante)}.`} />
       )}
       <Tarjeta anchoMaximo="560px">
+        <div className="tarjeta-logo-encabezado">
+          <img src="/tunjoLogo.svg" alt="Tunjo Logo" className="tarjeta-tunjo-emblema" />
+        </div>
         <Formulario
           campos={CAMPOS}
           formulario={formulario}

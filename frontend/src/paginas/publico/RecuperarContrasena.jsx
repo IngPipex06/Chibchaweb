@@ -68,6 +68,9 @@ export default function RecuperarContrasena() {
     >
       {paso.numero === 1 && (
         <Tarjeta anchoMaximo="560px">
+          <div className="tarjeta-logo-encabezado">
+            <img src="/tunjoLogo.svg" alt="Tunjo Logo" className="tarjeta-tunjo-emblema" />
+          </div>
           <Formulario
             campos={CAMPOS_CORREO}
             formulario={formularioCorreo}
@@ -81,6 +84,9 @@ export default function RecuperarContrasena() {
       )}
       {paso.numero === 2 && (
         <Tarjeta anchoMaximo="560px">
+          <div className="tarjeta-logo-encabezado">
+            <img src="/tunjoLogo.svg" alt="Tunjo Logo" className="tarjeta-tunjo-emblema" />
+          </div>
           <Formulario
             campos={CAMPOS_RESPUESTA}
             formulario={formularioRespuesta}

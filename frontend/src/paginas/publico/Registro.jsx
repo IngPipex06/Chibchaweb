@@ -85,6 +85,9 @@ export default function Registro() {
         <Aviso tipo="critico" titulo="Formulario restringido" texto={`Hubo demasiados intentos con datos incorrectos. Podrá intentar de nuevo en ${cuentaRegresiva(bloqueo.restante)}.`} />
       )}
       <Tarjeta anchoMaximo="860px">
+        <div className="tarjeta-logo-encabezado">
+          <img src="/tunjoLogo.svg" alt="Tunjo Logo" className="tarjeta-tunjo-emblema" />
+        </div>
         <Formulario
           campos={CAMPOS}
           formulario={formulario}

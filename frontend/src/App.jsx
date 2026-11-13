@@ -10,8 +10,18 @@ export default function App() {
         <main className="contenedor principal">
           <Rutas />
         </main>
-        <footer className="contenedor pie">
-          ChibchaWeb · Fundamentos de Ingeniería de Software · Universidad Distrital, 2026-III
+        <footer className="pie-contenedor">
+          <div className="contenedor pie-contenido">
+            <div className="pie-marca">
+              <img src="/tunjoLogo.svg" alt="Tunjo Logo" className="pie-logo" />
+              <span className="pie-nombre">
+                Chibcha<span className="pie-dorado">Web</span>
+              </span>
+            </div>
+            <p className="pie-texto">
+              ChibchaWeb · Fundamentos de Ingeniería de Software · Universidad Distrital, 2026-III
+            </p>
+          </div>
         </footer>
       </div>
     </ProveedorDeSesion>
