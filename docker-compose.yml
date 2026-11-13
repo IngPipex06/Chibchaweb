@@ -1,0 +1,20 @@
+services:
+  base-de-datos:
+    image: postgres:17-alpine
+    container_name: chibchaweb-bd
+    env_file: .env
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+      - ./database/iniciar.sh:/docker-entrypoint-initdb.d/iniciar.sh:ro
+      - ./database/migraciones:/migraciones:ro
+      - ./database/semillas:/semillas:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  datos-postgres:
